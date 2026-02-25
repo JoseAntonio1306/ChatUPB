@@ -8,7 +8,7 @@ public class ClienteMain {
             SocketClient socketClient = new SocketClient("localhost");
             socketClient.start();
 
-            socketClient.send("Hello");
+//            socketClient.send("Hello");
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -4,9 +4,9 @@
  */
 package edu.upb.chatupb_v2;
 
-import edu.upb.chatupb_v2.bl.message.Invitacion;
-import edu.upb.chatupb_v2.bl.message.Message;
+import edu.upb.chatupb_v2.bl.message.*;
 import edu.upb.chatupb_v2.bl.server.ChatServer;
+import edu.upb.chatupb_v2.bl.server.Mediador;
 import edu.upb.chatupb_v2.bl.server.SocketClient;
 import edu.upb.chatupb_v2.bl.server.SocketListener;
 
@@ -18,12 +18,27 @@ import javax.swing.*;
  */
 public class ChatUI extends javax.swing.JFrame implements SocketListener {
     SocketClient client;
+//    private final SocketListener externalListener;
+    private final MainChatUI mainUI;
+//    private SocketClient client;
+
     /**
      * Creates new form ChatUI
      */
+//    public ChatUI() {
+//        initComponents();
+//    }
+
     public ChatUI() {
-        initComponents();
+        this(null);
     }
+
+    public ChatUI(MainChatUI mainUI) {
+        this.mainUI = mainUI;
+        initComponents();
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+    }
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -91,18 +106,56 @@ public class ChatUI extends javax.swing.JFrame implements SocketListener {
 
     private void jBtnConectarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBtnConectarActionPerformed
         // TODO add your handling code here:
+//        try {
+//            client = new SocketClient(jtIp.getText().toString());
+//            Invitacion m1 = new Invitacion("001", "Jose");
+//            client.addListener((SocketListener) this);
+//            client.start();
+//            client.send(m1);
+//        } catch (Exception e) {
+//            System.out.println(e.getMessage());
+//        }
+//
+//        if (externalListener != null && externalListener != this) {
+//            client.addListener(externalListener);
+//        }
+        try {
+            String ip = jtIp.getText().trim();
+            if (ip.isEmpty()) return;
 
+            client = new SocketClient(ip);
+
+            // Si ChatUI fue abierta desde MainChatUI, usamos su ID y nombre
+            String id = (mainUI != null) ? mainUI.getMyUserId() : "00000001";
+            String nombre = (mainUI != null) ? mainUI.getMyName() : "Jose";
+
+            Invitacion invitacion = new Invitacion(id, nombre);
+
+            // IMPORTANTE: el listener debe ser la UI principal para que agregue el contacto
+            if (mainUI != null) {
+                client.addListener(mainUI);
+            }
+
+            client.start();
+            client.send(invitacion);
+
+            // cerramos la ventanita (opcional, pero cómodo)
+            dispose();
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
     }//GEN-LAST:event_jBtnConectarActionPerformed
 
     private void jBtnEnviarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBtnEnviarActionPerformed
         // TODO add your handling code here:
-        if(client != null){
-            try{
-            client.send(jtMensaje.getText().toString());
-            }catch(Exception e){
-            
-            }
-        }
+//        if(client != null){
+//            try{
+//            client.send(jtMensaje.getText().toString());
+//            }catch(Exception e){
+//
+//            }
+//        }
     }//GEN-LAST:event_jBtnEnviarActionPerformed
 
     /**
@@ -147,10 +200,35 @@ public class ChatUI extends javax.swing.JFrame implements SocketListener {
     private javax.swing.JTextField jtMensaje;
 
     @Override
-    public void onMessage(Message message) {
+    public void onMessage(SocketClient socketClient,Message message) {
         if(message instanceof Invitacion){
             Invitacion invitacion = (Invitacion) message;
-            JOptionPane.showMessageDialog(this, "Llego la invitacion: "+ invitacion.getNombre());
+            int respuesta = JOptionPane.showConfirmDialog(this,
+                    "Llego la invitacion: "+ invitacion.getNombre(),
+                    "Invitacion", JOptionPane.YES_NO_OPTION);
+
+            if (respuesta == JOptionPane.YES_OPTION){
+                //acepta la invitacion
+                Mediador.getInstance().addClient(invitacion.getIdUsuario(), socketClient);
+                Message aceptar = new Aceptar("00000001", "Jose");
+                Mediador.getInstance().sendMessage(invitacion.getIdUsuario(), aceptar);
+            }else{
+                try {
+                    Message rechazar = new Rechazar();
+                    socketClient.send(rechazar);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+//                Mediador.getInstance().sendMessage(invitacion.getIdUsuario(), rechazar);
+            }
+            if(message instanceof Offline) {
+                Offline offline = (Offline) message;
+                JOptionPane.showMessageDialog(this, "Offline.");
+                Mediador.getInstance().addClient(offline.getIdUsuario(), socketClient);
+                Mediador.getInstance().sendMessage(offline.getIdUsuario(), offline);
+
+                socketClient.close();
+            }
         }
         System.out.println("Llego la invitacion");
     }

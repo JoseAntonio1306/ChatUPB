@@ -4,5 +4,5 @@ import edu.upb.chatupb_v2.bl.message.Invitacion;
 import edu.upb.chatupb_v2.bl.message.Message;
 
 public interface SocketListener {
-    void onMessage(Message invitacion);
+    void onMessage(SocketClient socketClient,Message invitacion);
 }

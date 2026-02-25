@@ -11,17 +11,30 @@ import edu.upb.chatupb_v2.bl.server.ChatServer;
 public class ChatUPB_V2 {
 
     public static void main(String[] args) {
-               /* Create and display the form */
-        final ChatUI chatUI = new ChatUI();
-        java.awt.EventQueue.invokeLater(() -> chatUI.setVisible(true));
+
+        final MainChatUI mainUI = new MainChatUI();
+        java.awt.EventQueue.invokeLater(() -> mainUI.setVisible(true));
 
         try {
             ChatServer chatServer = new ChatServer();
+            chatServer.addListener(mainUI); // primero listener
             chatServer.start();
-            chatServer.addListener(chatUI);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
+               /* Create and display the form */
+//        final ChatUI chatUI = new ChatUI();
+//        java.awt.EventQueue.invokeLater(() -> chatUI.setVisible(true));
+//
+//        try {
+//            ChatServer chatServer = new ChatServer();
+//            chatServer.start();
+//            chatServer.addListener(chatUI);
+//        }catch (Exception e){
+//            e.printStackTrace();
+//        }
+
+
 
     }
 }

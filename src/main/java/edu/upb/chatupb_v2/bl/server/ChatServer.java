@@ -29,6 +29,8 @@ public class ChatServer extends Thread {
         while (true) {
             try {
                 SocketClient socketClient = new SocketClient(this.server.accept());
+//                Mediador.getInstance().addClient(socketClient.getIp(), socketClient);
+
                 socketClient.addListener(this.socketListener);
                 socketClient.start();
             } catch (Exception e) {

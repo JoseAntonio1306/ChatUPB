@@ -4,8 +4,7 @@
  */
 package edu.upb.chatupb_v2.bl.server;
 
-import edu.upb.chatupb_v2.bl.message.Invitacion;
-import edu.upb.chatupb_v2.bl.message.Message;
+import edu.upb.chatupb_v2.bl.message.*;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -25,6 +24,10 @@ public class SocketClient extends Thread {
     private final DataOutputStream dout;
     private final BufferedReader br;
     private List<SocketListener> socketListener = new ArrayList<>();
+
+    public String getIp() {
+        return ip;
+    }
 
     public SocketClient(Socket socket) throws IOException {
         this.socket = socket;
@@ -58,10 +61,38 @@ public class SocketClient extends Thread {
                 switch (split[0]) {
                     case "001": {
                         System.out.println("Es invitacion");
-                        notificar(Invitacion.parse(message));
+                        Invitacion invitacion = Invitacion.parse(message);
+                        invitacion.setIp(ip);
+//                        Mediador.getInstance().sendMessage(invitacion.getIdUsuario(), invitacion);
+                        notificar(invitacion);
+                        break;
                     }
                     case "002": {
-
+                        System.out.println("Es aceptacion");
+                        Aceptar aceptar = Aceptar.parse(message);
+//                        Mediador.getInstance().addClient(aceptar.getIdUsuario(), this);
+//                        Mediador.getInstance().sendMessage(aceptar.getIdUsuario(), aceptar);
+                        notificar(aceptar);
+                        break;
+                    }
+                    case "003": {
+                        System.out.println("Es rechazo");
+                        Rechazar rechazo = Rechazar.parse(message);
+                        rechazo.setIp(ip);
+                        notificar(rechazo);
+                        break;
+                    }
+                    case "007": {
+                        System.out.println("Es mensaje");
+                        Chat chat = Chat.parse(message);
+                        notificar(chat);
+                        break;
+                    }
+                    case "0018": {
+                        System.out.println("Esta fuera de linea");
+                        Offline offline = Offline.parse(message);
+                        notificar(offline);
+                        break;
                     }
                 }
             }
@@ -70,17 +101,17 @@ public class SocketClient extends Thread {
             e.printStackTrace();
         }
     }
-
+//172.16.72.1
     public void notificar(Message message) {
         for (SocketListener listener : socketListener) {
-            java.awt.EventQueue.invokeLater(() -> listener.onMessage(message));
+            java.awt.EventQueue.invokeLater(() -> listener.onMessage(this, message));
         }
     }
 
-    public void send(String message) throws IOException {
-        message = message + System.lineSeparator();
+    public void send(Message message) throws IOException {
+//        message = message + System.lineSeparator();
         try {
-            dout.write(message.getBytes("UTF-8"));
+            dout.write(message.generarTrama().getBytes("UTF-8"));
             dout.flush();
         } catch (Exception e) {
             e.printStackTrace();
