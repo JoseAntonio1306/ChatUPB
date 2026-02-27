@@ -4,6 +4,8 @@
 package edu.upb.chatupb_v2;
 
 import edu.upb.chatupb_v2.bl.server.ChatServer;
+import edu.upb.chatupb_v2.controller.ContactController;
+import edu.upb.chatupb_v2.view.IChatView;
 
 /**
  * @author rlaredo
@@ -22,7 +24,7 @@ public class ChatUPB_V2 {
         } catch (Exception e) {
             e.printStackTrace();
         }
-               /* Create and display the form */
+        /* Create and display the form */
 //        final ChatUI chatUI = new ChatUI();
 //        java.awt.EventQueue.invokeLater(() -> chatUI.setVisible(true));
 //

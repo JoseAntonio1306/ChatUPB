@@ -13,6 +13,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="ChatUPB_V2" />
+        <module name="ChatUPB" />
       </profile>
     </annotationProcessing>
   </component>

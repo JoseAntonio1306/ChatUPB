@@ -1,10 +1,18 @@
 package edu.upb.chatupb_v2.bl.server;
 
+import edu.upb.chatupb_v2.bl.message.Invitacion;
 import edu.upb.chatupb_v2.bl.message.Message;
+import edu.upb.chatupb_v2.controller.exception.OperationException;
 
+import javax.management.openmbean.OpenDataException;
+import java.io.IOException;
 import java.util.HashMap;
 
-public class Mediador{
+public class Mediador implements SocketListener{
+    @Override
+    public void onMessage(SocketClient socketClient, Message invitacion) {
+
+    }
 
     private static final Mediador INSTANCE = new Mediador();
 
@@ -36,6 +44,24 @@ public class Mediador{
         System.out.println("Enviando mensaje: " + message.generarTrama());
     }
 
+    public void invitacion(String ip){
+        SocketClient client;
+        try{
+            client = new SocketClient(ip);
+            client.addListener(this);
+            client.start();
 
+        } catch (Exception e) {
+            throw new OperationException("No se logro establecer la conexion");
+        }
+        Invitacion invitacion = new Invitacion();
+        invitacion.setIdUsuario("MI_ID");
+        invitacion.setNombre("MI_NOMBRE");
+        try {
+            client.send(invitacion);
+        } catch (IOException e) {
+            throw new OperationException("No se logro enviar el mensaje ");
+        }
+    }
 
 }

@@ -2,8 +2,9 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package edu.upb.chatupb_v2.repository;
+package edu.upb.chatupb_v2.model.entities;
 
+import edu.upb.chatupb_v2.model.Model;
 import lombok.*;
 
 import java.io.Serializable;
@@ -33,11 +34,11 @@ public class Contact implements Serializable, Model {
     private String name;
     private String ip;
     private boolean stateConnect = false;
-    
+
     public String roomCode(){
         return ME_CODE + code;
     }
-    
+
 
 }
 

@@ -4,21 +4,30 @@ import edu.upb.chatupb_v2.bl.message.*;
 import edu.upb.chatupb_v2.bl.server.Mediador;
 import edu.upb.chatupb_v2.bl.server.SocketClient;
 import edu.upb.chatupb_v2.bl.server.SocketListener;
-import edu.upb.chatupb_v2.bl.server.Mediador;
+import edu.upb.chatupb_v2.controller.ContactController;
+import edu.upb.chatupb_v2.controller.MessageController;
+import edu.upb.chatupb_v2.model.entities.Contact;
+import edu.upb.chatupb_v2.model.ContactDao;
+import edu.upb.chatupb_v2.view.ContactRenderer;
+import edu.upb.chatupb_v2.view.IChatView;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
+import java.sql.SQLException;
+import java.util.List;
 import java.util.UUID;
 
-public class MainChatUI extends JFrame implements SocketListener{
+public class MainChatUI extends JFrame implements SocketListener, IChatView {
 
-    private final String myUserId = "00000001-0001-0001-0001-000000000001";//UUID.randomUUID().toString()
+    private final String myUserId = "00000001-0001-0001-0001-000000000001";
     private final String myName;
 
-    private final DefaultListModel<ContactItem> contactosModel = new DefaultListModel<>();
-    private final JList<ContactItem> listaContactos = new JList<>(contactosModel);
+    private final ContactDao contactDao = new ContactDao();
+    private ContactController contactController;
+    private MessageController messageController;
+
+    private final DefaultListModel<Contact> contactosModel = new DefaultListModel<>();
+    private final JList<Contact> listaContactos = new JList<>(contactosModel);
 
     private final JButton btnAddContacto = new JButton("Añadir contacto");
 
@@ -30,10 +39,10 @@ public class MainChatUI extends JFrame implements SocketListener{
 
     private final JButton btnOffline = new JButton("Offline");
 
-    private ContactItem contactoSeleccionado = null;
+    private Contact contactoSeleccionado = null;
 
-    // historial en memoria: userId -> texto del chat
-    private final Map<String, StringBuilder> historial = new HashMap<>();
+    // historial en memoria: code(userId) -> texto del chat
+//    private final Map<String, StringBuilder> historial = new HashMap<>();
 
     public MainChatUI() {
         super("ChatUPB");
@@ -49,13 +58,22 @@ public class MainChatUI extends JFrame implements SocketListener{
         construirUI();
         conectarEventos();
 
-//        txtChat.append("Tu ID: " + myUserId + "\n");
-//        txtChat.append("Tu nombre: " + myName + "\n\n");
-//        txtChat.append("Usa 'Añadir contacto' para conectar.\n");
+        MessageController msgController = new MessageController(this, myUserId);
+        setMessageController(msgController);
+
+//        cargarContactosDesdeDB();
+        ContactController controller = new ContactController(this);
+        setContactController(controller);
+        controller.onLoad();
     }
 
-    public String getMyUserId() { return myUserId; }
-    public String getMyName() { return myName; }
+    public String getMyUserId() {
+        return myUserId;
+    }
+
+    public String getMyName() {
+        return myName;
+    }
 
     private void construirUI() {
         JPanel panelIzq = new JPanel(new BorderLayout(8, 8));
@@ -63,21 +81,17 @@ public class MainChatUI extends JFrame implements SocketListener{
         panelIzq.add(btnAddContacto, BorderLayout.NORTH);
 
         listaContactos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        listaContactos.setCellRenderer(new ContactRenderer());
         panelIzq.add(new JScrollPane(listaContactos), BorderLayout.CENTER);
 
         JPanel panelDer = new JPanel(new BorderLayout(8, 8));
         panelDer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-
-        JPanel panelDer2 = new JPanel(new BorderLayout(8,8));
+        JPanel panelHeader = new JPanel(new BorderLayout(8, 8));
         lblNombreContacto.setFont(lblNombreContacto.getFont().deriveFont(Font.BOLD, 16f));
-        panelDer2.add(lblNombreContacto, BorderLayout.CENTER);
-        panelDer2.add(btnOffline, BorderLayout.EAST);
-        panelDer.add(panelDer2, BorderLayout.NORTH);
-
-//        lblNombreContacto.setFont(lblNombreContacto.getFont().deriveFont(Font.BOLD, 16f));
-//        panelDer.add(lblNombreContacto, BorderLayout.NORTH);
-//        panelDer.add(new JPanel(btnOffline.getLayout()), BorderLayout.NORTH);
+        panelHeader.add(lblNombreContacto, BorderLayout.CENTER);
+        panelHeader.add(btnOffline, BorderLayout.EAST);
+        panelDer.add(panelHeader, BorderLayout.NORTH);
 
         txtChat.setEditable(false);
         panelDer.add(new JScrollPane(txtChat), BorderLayout.CENTER);
@@ -105,14 +119,32 @@ public class MainChatUI extends JFrame implements SocketListener{
                 return;
             }
 
-            lblNombreContacto.setText(contactoSeleccionado.nombre);
-            StringBuilder sb = historial.getOrDefault(contactoSeleccionado.userId, new StringBuilder());
-            txtChat.setText(sb.toString());
+            lblNombreContacto.setText(contactoSeleccionado.getName());
+            if (messageController != null) {
+                messageController.onOpenConversation(contactoSeleccionado);
+            } else {
+                txtChat.setText("");
+            }
         });
 
         btnEnviar.addActionListener(e -> enviarMensaje());
-        txtMensaje.addActionListener(e -> enviarMensaje()); // Enter
+        txtMensaje.addActionListener(e -> enviarMensaje());
         btnOffline.addActionListener(e -> mandarOffline());
+    }
+
+    private void cargarContactosDesdeDB() {
+        contactosModel.clear();
+        try {
+            List<Contact> contactos = contactDao.findAll();
+            for (Contact c : contactos) {
+                c.setStateConnect(false); // estado en runtime
+                contactosModel.addElement(c);
+            }
+        } catch (SQLException e) {
+            System.err.println("[DB] No se pudo cargar contactos: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void abrirUIAgregarContacto() {
@@ -120,11 +152,13 @@ public class MainChatUI extends JFrame implements SocketListener{
         ui.setVisible(true);
     }
 
-    private void mandarOffline(){
-
-            Message offline = new Offline(contactoSeleccionado.userId);
-            Mediador.getInstance().sendMessage(myUserId, offline);
-
+    private void mandarOffline() {
+        if (contactoSeleccionado == null) {
+            JOptionPane.showMessageDialog(this, "Primero selecciona un contacto.");
+            return;
+        }
+        Message offline = new Offline(contactoSeleccionado.getCode());
+        Mediador.getInstance().sendMessage(myUserId, offline);
     }
 
     private void enviarMensaje() {
@@ -138,121 +172,72 @@ public class MainChatUI extends JFrame implements SocketListener{
             return;
         }
 
-        appendToHistory(contactoSeleccionado.userId, "Yo: " + texto);
         txtMensaje.setText("");
 
-        Message chat = new Chat(myUserId, UUID.randomUUID().toString(), texto);
-        Mediador.getInstance().sendMessage(contactoSeleccionado.userId, chat);
-    }
+        String messageId = UUID.randomUUID().toString();
 
-    private void appendToHistory(String contactId, String line) {
-        StringBuilder sb = historial.computeIfAbsent(contactId, k -> new StringBuilder());
-        sb.append(line).append("\n");
-
-        // si justo estoy viendo ese chat, actualizo pantalla
-        if (contactoSeleccionado != null && contactoSeleccionado.userId.equals(contactId)) {
-            txtChat.setText(sb.toString());
+        if (messageController != null) {
+            messageController.onOutgoingMessage(contactoSeleccionado, messageId, texto);
+            messageController.onOpenConversation(contactoSeleccionado); // recargar historial
         }
+
+        Message chat = new Chat(myUserId, messageId, texto);
+        Mediador.getInstance().sendMessage(contactoSeleccionado.getCode(), chat);
     }
 
-    private void upsertContacto(String userId, String nombre) {
+//    private void appendToHistory(String contactCode, String line) {
+//        StringBuilder sb = historial.computeIfAbsent(contactCode, k -> new StringBuilder());
+//        sb.append(line).append("\n");
+//
+//        if (contactoSeleccionado != null && contactoSeleccionado.getCode().equals(contactCode)) {
+//            txtChat.setText(sb.toString());
+//        }
+//    }
+
+    private void upsertContactoEnUI(Contact contact) {
         for (int i = 0; i < contactosModel.size(); i++) {
-            ContactItem c = contactosModel.get(i);
-            if (c.userId.equals(userId)) {
-                c.nombre = nombre;
+            Contact c = contactosModel.get(i);
+            if (c.getCode().equals(contact.getCode())) {
+                c.setName(contact.getName());
+                c.setIp(contact.getIp());
+                c.setStateConnect(contact.isStateConnect());
                 listaContactos.repaint();
                 return;
             }
         }
-        contactosModel.addElement(new ContactItem(userId, nombre));
+        contactosModel.addElement(contact);
     }
 
-//    @Override
-    public void onMessage(SocketClient socketClient, Message message) {
-
-//        if (message instanceof Invitacion) {
-//            Invitacion inv = (Invitacion) message;
-//
-//            int respuesta = JOptionPane.showConfirmDialog(
-//                    this,
-//                    "Invitación de: " + inv.getNombre(),
-//                    "Invitación",
-//                    JOptionPane.YES_NO_OPTION
-//            );
-//
-//            if (respuesta == JOptionPane.YES_OPTION) {
-//                // Guardar socket para poder enviarle cosas a ese userId
-//                Mediador.getInstance().addClient(inv.getIdUsuario(), socketClient);
-//
-//                // Agregar contacto a la lista
-//                upsertContacto(inv.getIdUsuario(), inv.getNombre());
-//
-//                // Responder aceptando
-//                Message aceptar = new Aceptar(myUserId, myName);
-//                Mediador.getInstance().sendMessage(inv.getIdUsuario(), aceptar);
-//            }else{
-//                try {
-//                    Message rechazar = new Rechazar();
-//                    socketClient.send(rechazar);
-//                }catch (Exception e){
-//                    e.printStackTrace();
-//                }
-//            }
-//            return;
-//        }
-//
-//        if (message instanceof Aceptar) {
-//            Aceptar ac = (Aceptar) message;
-//
-//            // Guardar socket para ese userId (ahora ya puedo mandarle mensajes)
-//            Mediador.getInstance().addClient(ac.getIdUsuario(), socketClient);
-//
-//            // Agregar contacto
-//            upsertContacto(ac.getIdUsuario(), ac.getNombre());
-//
-//            JOptionPane.showMessageDialog(this, ac.getNombre() + " aceptó tu invitación.");
-//
-//            // auto-seleccionar para chatear
-//            for (int i = 0; i < contactosModel.size(); i++) {
-//                if (contactosModel.get(i).userId.equals(ac.getIdUsuario())) {
-//                    listaContactos.setSelectedIndex(i);
-//                    break;
-//                }
-//            }
-//            return;
-//        }
-//        if (message instanceof Rechazar) {
-//            JOptionPane.showMessageDialog(this, "Offline.");
-//            return;
-//        }
-//
-//        if (message instanceof Chat) {
-//            Chat chat = (Chat) message;
-//            // por si llega un mensaje de alguien “nuevo”
-//            upsertContacto(chat.getIdUsuario(), chat.getIdUsuario());
-//
-//            appendToHistory(chat.getIdUsuario(), "Él: " + chat.getMensaje());
-//        }
-//
-//        if(message instanceof Offline) {
-//            Offline offline = (Offline) message;
-//
-//            Mediador.getInstance().addClient(offline.getIdUsuario(), socketClient);
-//            Mediador.getInstance().sendMessage(offline.getIdUsuario(), offline);
-//
-//            JOptionPane.showMessageDialog(this, "Offline.");
-//            socketClient.close();
-//        }
-    }
-
-    private final SocketListener socketListener = new SocketListener() {
-        @Override
-        public void onMessage(SocketClient socketClient, Message message) {
-            helpWithMessages(socketClient, message);
+    private Contact persistContact(String code, String name, String ip) {
+        try {
+            return contactDao.upsert(code, name, ip);
+        } catch (Exception e) {
+            System.err.println("[DB] No se pudo guardar/actualizar contacto: " + e.getMessage());
+            return Contact.builder().code(code).name(name).ip(ip).stateConnect(false).build();
         }
-    };
+    }
 
-    public SocketListener getSocketListener() { return socketListener; }
+    private void handleCommon(SocketClient socketClient, Message message) {
+        if (message instanceof Offline) {
+            Offline off = (Offline) message;
+
+            // marco como offline en UI
+            for (int i = 0; i < contactosModel.size(); i++) {
+                Contact c = contactosModel.get(i);
+                if (c.getCode().equals(off.getIdUsuario())) {
+                    c.setStateConnect(false);
+                    listaContactos.repaint();
+                    break;
+                }
+            }
+
+            Mediador.getInstance().addClient(off.getIdUsuario(), socketClient);
+            Mediador.getInstance().sendMessage(off.getIdUsuario(), off);
+
+            JOptionPane.showMessageDialog(this, "Offline.");
+            socketClient.close();
+        }
+    }
 
     private void helpWithMessages(SocketClient socketClient, Message message) {
         if (message instanceof Invitacion) {
@@ -266,20 +251,19 @@ public class MainChatUI extends JFrame implements SocketListener{
             );
 
             if (respuesta == JOptionPane.YES_OPTION) {
-                // Guardar socket para poder enviarle cosas a ese userId
                 Mediador.getInstance().addClient(inv.getIdUsuario(), socketClient);
 
-                // Agregar contacto a la lista
-                upsertContacto(inv.getIdUsuario(), inv.getNombre());
+                String ip = socketClient.getIp();
+                Contact contact = persistContact(inv.getIdUsuario(), inv.getNombre(), ip);
+                contact.setStateConnect(true);
+                upsertContactoEnUI(contact);
 
-                // Responder aceptando
                 Message aceptar = new Aceptar(myUserId, myName);
                 Mediador.getInstance().sendMessage(inv.getIdUsuario(), aceptar);
-            }else{
+            } else {
                 try {
-                    Message rechazar = new Rechazar();
-                    socketClient.send(rechazar);
-                }catch (Exception e){
+                    socketClient.send(new Rechazar());
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -288,77 +272,107 @@ public class MainChatUI extends JFrame implements SocketListener{
 
         if (message instanceof Aceptar) {
             Aceptar ac = (Aceptar) message;
-
-            // Guardar socket para ese userId (ahora ya puedo mandarle mensajes)
             Mediador.getInstance().addClient(ac.getIdUsuario(), socketClient);
 
-            // Agregar contacto
-            upsertContacto(ac.getIdUsuario(), ac.getNombre());
+            String ip = socketClient.getIp();
+            Contact contact = persistContact(ac.getIdUsuario(), ac.getNombre(), ip);
+            contact.setStateConnect(true);
+            upsertContactoEnUI(contact);
 
             JOptionPane.showMessageDialog(this, ac.getNombre() + " aceptó tu invitación.");
 
             // auto-seleccionar para chatear
             for (int i = 0; i < contactosModel.size(); i++) {
-                if (contactosModel.get(i).userId.equals(ac.getIdUsuario())) {
+                if (contactosModel.get(i).getCode().equals(ac.getIdUsuario())) {
                     listaContactos.setSelectedIndex(i);
                     break;
                 }
             }
             return;
         }
+
         if (message instanceof Rechazar) {
-            JOptionPane.showMessageDialog(this, "Offline.");
+            JOptionPane.showMessageDialog(this, "Rechazaron tu invitación.");
             return;
         }
 
         if (message instanceof Chat) {
             Chat chat = (Chat) message;
-            // por si llega un mensaje de alguien “nuevo”
-            upsertContacto(chat.getIdUsuario(), chat.getIdUsuario());
 
-            appendToHistory(chat.getIdUsuario(), "Él: " + chat.getMensaje());
+            if (messageController != null) {
+                messageController.onIncomingMessage(chat);
+
+                if (contactoSeleccionado != null && contactoSeleccionado.getCode().equals(chat.getIdUsuario())) {
+                    messageController.onOpenConversation(contactoSeleccionado);
+                }
+            }
+
+            String ip = socketClient.getIp();
+
+            String nameToUse = chat.getIdUsuario();
+            try {
+                Contact existing = contactDao.findByCode(chat.getIdUsuario());
+                if (existing != null && existing.getName() != null && !existing.getName().isBlank()) {
+                    nameToUse = existing.getName();
+                }
+            } catch (Exception ignored) {}
+
+            Contact contact = persistContact(chat.getIdUsuario(), nameToUse, ip);
+            contact.setStateConnect(true);
+            upsertContactoEnUI(contact);
+
+            return;
         }
 
-        if(message instanceof Offline) {
-            Offline offline = (Offline) message;
-
-            Mediador.getInstance().addClient(offline.getIdUsuario(), socketClient);
-            Mediador.getInstance().sendMessage(offline.getIdUsuario(), offline);
-
-            JOptionPane.showMessageDialog(this, "Offline.");
-            socketClient.close();
-        }
+        handleCommon(socketClient, message);
     }
 
-    private static class ContactItem {
-        String userId;
-        String nombre;
 
-        ContactItem(String userId, String nombre) {
-            this.userId = userId;
-            this.nombre = (nombre == null || nombre.trim().isEmpty()) ? userId : nombre;
-        }
+    @Override
+    public void setContactController(ContactController contactController) {
+        this.contactController = contactController;
+    }
 
-//        @Override
-//        protected void handleCommon(SocketClient socketClient, Message message) {
-//            // Si llega Aceptar o Invitacion, podrías registrar el socket
-//            // OJO: esto depende de cómo quieres tu flujo, pero es lo que te "sugiere" el enunciado.
-//
-//            if (message instanceof edu.upb.chatupb_v2.bl.message.Aceptar) {
-//                var ac = (edu.upb.chatupb_v2.bl.message.Aceptar) message;
-//                Mediador.getInstance().addClient(ac.getIdUsuario(), socketClient);
-//            }
-//
-//            if (message instanceof edu.upb.chatupb_v2.bl.message.Offline) {
-//                var off = (edu.upb.chatupb_v2.bl.message.Offline) message;
-//                Mediador.getInstance().removeClient(off.getIdUsuario());
-//                try { socketClient.close(); } catch (Exception ignored) {}
-//            }
+//    @Override
+//    public void onLoad(List<Contact> contactsList) {
+//        try {
+    ////                modelo.removeAllElements();
+//            contactosModel.addAll(contactsList);
+//            mainView.lista.setModel(contactosModel);
+//        } catch (Exception e){
+//            e.printStackTrace();
 //        }
+//    }
+    @Override
+    public void onLoad(List<Contact> contactsList) {
+        SwingUtilities.invokeLater(() -> {
+            contactosModel.clear();
 
-        @Override
-        public String toString() {
-            return nombre;
+            for (Contact c : contactsList) {
+                c.setStateConnect(false); // runtime
+                contactosModel.addElement(c);
+            }
+
+            listaContactos.setModel(contactosModel);
+
+            listaContactos.repaint();
+        });
+    }
+
+    @Override
+    public void setMessageController(MessageController messageController) {
+        this.messageController = messageController;
+    }
+
+    @Override
+    public void onChatHistoryLoaded(String contactCode, String historyText) {
+        // solo actualiza si ese contacto es el seleccionado
+        if (contactoSeleccionado != null && contactoSeleccionado.getCode().equals(contactCode)) {
+            txtChat.setText(historyText);
         }
+    }
+    @Override
+    public void onMessage(SocketClient socketClient, Message message) {
+        helpWithMessages(socketClient, message);
     }
 }

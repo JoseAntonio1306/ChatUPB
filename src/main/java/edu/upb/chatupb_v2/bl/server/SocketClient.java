@@ -101,7 +101,7 @@ public class SocketClient extends Thread {
             e.printStackTrace();
         }
     }
-//172.16.72.1
+    //172.16.72.1
     public void notificar(Message message) {
         for (SocketListener listener : socketListener) {
             java.awt.EventQueue.invokeLater(() -> listener.onMessage(this, message));
