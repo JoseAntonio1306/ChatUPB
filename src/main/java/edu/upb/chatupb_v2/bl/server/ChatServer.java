@@ -16,6 +16,7 @@ public class ChatServer extends Thread {
 
     private final ServerSocket server;
     private SocketListener socketListener;
+    private Mediador mediador;
     public ChatServer() throws IOException {
         this.server = new ServerSocket(port);
     }
@@ -23,6 +24,8 @@ public class ChatServer extends Thread {
     public void addListener(SocketListener listener) {
         this.socketListener = listener;
     }
+
+
 
     @Override
     public void run() {
@@ -32,6 +35,7 @@ public class ChatServer extends Thread {
 //                Mediador.getInstance().addClient(socketClient.getIp(), socketClient);
 
                 socketClient.addListener(this.socketListener);
+
                 socketClient.start();
             } catch (Exception e) {
                 e.printStackTrace();
