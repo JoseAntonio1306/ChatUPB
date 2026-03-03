@@ -1,15 +1,13 @@
-package edu.upb.chatupb_v2;
+package edu.upb.chatupb_v2.view;
 
-import edu.upb.chatupb_v2.bl.message.*;
-import edu.upb.chatupb_v2.bl.server.Mediador;
-import edu.upb.chatupb_v2.bl.server.SocketClient;
-import edu.upb.chatupb_v2.bl.server.SocketListener;
+import edu.upb.chatupb_v2.model.entities.message.*;
+import edu.upb.chatupb_v2.model.server.Mediador;
+import edu.upb.chatupb_v2.model.server.SocketClient;
+import edu.upb.chatupb_v2.model.server.SocketListener;
 import edu.upb.chatupb_v2.controller.ContactController;
 import edu.upb.chatupb_v2.controller.MessageController;
 import edu.upb.chatupb_v2.model.entities.Contact;
-import edu.upb.chatupb_v2.model.ContactDao;
-import edu.upb.chatupb_v2.view.ContactRenderer;
-import edu.upb.chatupb_v2.view.IChatView;
+import edu.upb.chatupb_v2.model.dao.ContactDao;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,7 +15,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 
-public class MainChatUI extends JFrame implements SocketListener, IChatView {
+public class MainChatUI extends JFrame implements IChatView {
 
     private final String myUserId = "00000001-0001-0001-0001-000000000001";
     private final String myName;
@@ -231,11 +229,7 @@ public class MainChatUI extends JFrame implements SocketListener, IChatView {
                 }
             }
 
-            Mediador.getInstance().addClient(off.getIdUsuario(), socketClient);
-            Mediador.getInstance().sendMessage(off.getIdUsuario(), off);
-
             JOptionPane.showMessageDialog(this, "Offline.");
-            socketClient.close();
         }
     }
 
@@ -371,8 +365,9 @@ public class MainChatUI extends JFrame implements SocketListener, IChatView {
             txtChat.setText(historyText);
         }
     }
+
     @Override
-    public void onMessage(SocketClient socketClient, Message message) {
+    public void onSocketMessage(SocketClient socketClient, Message message) {
         helpWithMessages(socketClient, message);
     }
 }

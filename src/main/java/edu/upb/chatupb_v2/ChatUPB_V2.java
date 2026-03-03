@@ -3,9 +3,9 @@
  */
 package edu.upb.chatupb_v2;
 
-import edu.upb.chatupb_v2.bl.server.ChatServer;
-import edu.upb.chatupb_v2.controller.ContactController;
-import edu.upb.chatupb_v2.view.IChatView;
+import edu.upb.chatupb_v2.model.server.ChatServer;
+import edu.upb.chatupb_v2.model.server.Mediador;
+import edu.upb.chatupb_v2.view.MainChatUI;
 
 /**
  * @author rlaredo
@@ -19,7 +19,9 @@ public class ChatUPB_V2 {
 
         try {
             ChatServer chatServer = new ChatServer();
-            chatServer.addListener(mainUI); // primero listener
+            Mediador.getInstance().setView(mainUI);
+            chatServer.addListener(Mediador.getInstance());
+//            chatServer.addListener(mainUI); // primero listener
             chatServer.start();
         } catch (Exception e) {
             e.printStackTrace();

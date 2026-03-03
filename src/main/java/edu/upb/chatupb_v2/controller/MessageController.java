@@ -1,9 +1,9 @@
 package edu.upb.chatupb_v2.controller;
 
-import edu.upb.chatupb_v2.bl.message.Chat;
+import edu.upb.chatupb_v2.model.entities.message.Chat;
 import edu.upb.chatupb_v2.model.entities.Contact;
 import edu.upb.chatupb_v2.model.entities.Message;
-import edu.upb.chatupb_v2.model.MessageDao;
+import edu.upb.chatupb_v2.model.dao.MessageDao;
 import edu.upb.chatupb_v2.view.IChatView;
 
 import java.time.LocalDateTime;

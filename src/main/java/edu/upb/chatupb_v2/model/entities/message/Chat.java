@@ -1,7 +1,12 @@
-package edu.upb.chatupb_v2.bl.message;
+package edu.upb.chatupb_v2.model.entities.message;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.regex.Pattern;
 
+@Getter
+@Setter
 public class Chat extends Message{
     private String idUsuario;
     private String idMensaje;
@@ -30,27 +35,4 @@ public class Chat extends Message{
         return getCodigo() +"|" +idUsuario +"|" + idMensaje + "|" + mensaje + System.lineSeparator();
     }
 
-    public String getIdUsuario() {
-        return idUsuario;
-    }
-
-    public void setIdUsuario(String idUsuario) {
-        this.idUsuario = idUsuario;
-    }
-
-    public String getIdMensaje() {
-        return idMensaje;
-    }
-
-    public void setIdMensaje(String idMensaje) {
-        this.idMensaje = idMensaje;
-    }
-
-    public String getMensaje() {
-        return mensaje;
-    }
-
-    public void setMensaje(String mensaje) {
-        this.mensaje = mensaje;
-    }
 }

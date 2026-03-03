@@ -2,14 +2,13 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-package edu.upb.chatupb_v2;
+package edu.upb.chatupb_v2.view;
 
-import edu.upb.chatupb_v2.bl.message.*;
-import edu.upb.chatupb_v2.bl.server.Mediador;
-import edu.upb.chatupb_v2.bl.server.SocketClient;
-import edu.upb.chatupb_v2.bl.server.SocketListener;
+import edu.upb.chatupb_v2.model.entities.message.*;
+import edu.upb.chatupb_v2.model.server.Mediador;
+import edu.upb.chatupb_v2.model.server.SocketClient;
+import edu.upb.chatupb_v2.model.server.SocketListener;
 import edu.upb.chatupb_v2.controller.ContactController;
-import edu.upb.chatupb_v2.view.IChatView;
 
 import javax.swing.*;
 
@@ -17,12 +16,12 @@ import javax.swing.*;
  *
  * @author rlaredo
  */
-public class ChatUI extends javax.swing.JFrame implements SocketListener {
+public class ChatUI extends javax.swing.JFrame {
     private ContactController contactController;
     public ContactController getContactController() {
         return contactController;
     }
-    SocketClient client;
+    private SocketClient client;
     //    private final SocketListener externalListener;
     private final MainChatUI mainUI;
 //    private SocketClient client;
@@ -138,8 +137,9 @@ public class ChatUI extends javax.swing.JFrame implements SocketListener {
 
             // IMPORTANTE: el listener debe ser la UI principal para que agregue el contacto
             if (mainUI != null) {
-                client.addListener(mainUI);
+                Mediador.getInstance().setView(mainUI);
             }
+            client.addListener(Mediador.getInstance());
 
             client.start();
             client.send(invitacion);
@@ -204,38 +204,38 @@ public class ChatUI extends javax.swing.JFrame implements SocketListener {
     private javax.swing.JTextField jtIp;
     private javax.swing.JTextField jtMensaje;
 
-    @Override
-    public void onMessage(SocketClient socketClient,Message message) {
-        if(message instanceof Invitacion){
-            Invitacion invitacion = (Invitacion) message;
-            int respuesta = JOptionPane.showConfirmDialog(this,
-                    "Llego la invitacion: "+ invitacion.getNombre(),
-                    "Invitacion", JOptionPane.YES_NO_OPTION);
-
-            if (respuesta == JOptionPane.YES_OPTION){
-                //acepta la invitacion
-                Mediador.getInstance().addClient(invitacion.getIdUsuario(), socketClient);
-                Message aceptar = new Aceptar("00000001", "Jose");
-                Mediador.getInstance().sendMessage(invitacion.getIdUsuario(), aceptar);
-            }else{
-                try {
-                    Message rechazar = new Rechazar();
-                    socketClient.send(rechazar);
-                }catch (Exception e){
-                    e.printStackTrace();
-                }
-//                Mediador.getInstance().sendMessage(invitacion.getIdUsuario(), rechazar);
-            }
-            if(message instanceof Offline) {
-                Offline offline = (Offline) message;
-                JOptionPane.showMessageDialog(this, "Offline.");
-                Mediador.getInstance().addClient(offline.getIdUsuario(), socketClient);
-                Mediador.getInstance().sendMessage(offline.getIdUsuario(), offline);
-
-                socketClient.close();
-            }
-        }
-        System.out.println("Llego la invitacion");
-    }
+//    @Override
+//    public void onMessage(SocketClient socketClient,Message message) {
+//        if(message instanceof Invitacion){
+//            Invitacion invitacion = (Invitacion) message;
+//            int respuesta = JOptionPane.showConfirmDialog(this,
+//                    "Llego la invitacion: "+ invitacion.getNombre(),
+//                    "Invitacion", JOptionPane.YES_NO_OPTION);
+//
+//            if (respuesta == JOptionPane.YES_OPTION){
+//                //acepta la invitacion
+//                Mediador.getInstance().addClient(invitacion.getIdUsuario(), socketClient);
+//                Message aceptar = new Aceptar("00000001", "Jose");
+//                Mediador.getInstance().sendMessage(invitacion.getIdUsuario(), aceptar);
+//            }else{
+//                try {
+//                    Message rechazar = new Rechazar();
+//                    socketClient.send(rechazar);
+//                }catch (Exception e){
+//                    e.printStackTrace();
+//                }
+////                Mediador.getInstance().sendMessage(invitacion.getIdUsuario(), rechazar);
+//            }
+//            if(message instanceof Offline) {
+//                Offline offline = (Offline) message;
+//                JOptionPane.showMessageDialog(this, "Offline.");
+//                Mediador.getInstance().addClient(offline.getIdUsuario(), socketClient);
+//                Mediador.getInstance().sendMessage(offline.getIdUsuario(), offline);
+//
+//                socketClient.close();
+//            }
+//        }
+//        System.out.println("Llego la invitacion");
+//
     // End of variables declaration//GEN-END:variables
 }

@@ -1,7 +1,12 @@
-package edu.upb.chatupb_v2.bl.message;
+package edu.upb.chatupb_v2.model.entities.message;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.regex.Pattern;
 
+@Getter
+@Setter
 public class Invitacion extends Message{
 
     private String idUsuario;
@@ -28,21 +33,5 @@ public class Invitacion extends Message{
     public String generarTrama() {
         return getCodigo() +"|" +idUsuario +"|" +nombre + System.lineSeparator();
     }
-
-    public String getIdUsuario() {
-        return idUsuario;
-    }
-    public void setIdUsuario(String idUsuario) {
-        this.idUsuario = idUsuario;
-    }
-    public String getNombre() {
-        return nombre;
-    }
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-
-
 
 }

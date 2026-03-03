@@ -1,21 +1,16 @@
-package edu.upb.chatupb_v2.bl.server;
+package edu.upb.chatupb_v2.model.server;
 
-import edu.upb.chatupb_v2.bl.message.Invitacion;
-import edu.upb.chatupb_v2.bl.message.Message;
+import edu.upb.chatupb_v2.model.entities.message.Invitacion;
+import edu.upb.chatupb_v2.model.entities.message.Message;
 import edu.upb.chatupb_v2.controller.exception.OperationException;
+import edu.upb.chatupb_v2.view.IChatView;
 
-import javax.management.openmbean.OpenDataException;
 import java.io.IOException;
 import java.util.HashMap;
 
 public class Mediador implements SocketListener{
-    @Override
-    public void onMessage(SocketClient socketClient, Message invitacion) {
-
-    }
-
     private static final Mediador INSTANCE = new Mediador();
-
+    private volatile IChatView view;
     private final HashMap<String, SocketClient> clients = new HashMap<>();
 
     private Mediador(){}
@@ -62,6 +57,20 @@ public class Mediador implements SocketListener{
         } catch (IOException e) {
             throw new OperationException("No se logro enviar el mensaje ");
         }
+    }
+
+    @Override
+    public void onMessage(SocketClient socketClient, Message message) {
+        // El Mediador recibe TODOS los mensajes desde los SocketClient.
+        // Reenvía a la vista principal para que actualice la UI.
+        IChatView v = this.view;
+        if (v != null) {
+            v.onSocketMessage(socketClient, message);
+        }
+    }
+
+    public void setView(IChatView view) {
+        this.view = view;
     }
 
 }
