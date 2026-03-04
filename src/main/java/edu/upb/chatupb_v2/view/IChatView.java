@@ -14,5 +14,6 @@ public interface IChatView {
 
     void setMessageController(MessageController messageController);
     void onChatHistoryLoaded(String contactCode, String historyText);
-    void onSocketMessage(SocketClient socketClient, Message message);
+    void onSocketMessage(Message message);
+    void onContactStatusChanged(String contactCode, boolean online);
 }

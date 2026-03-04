@@ -104,4 +104,9 @@ public class ContactDao {
         update(existing);
         return existing;
     }
+    public void deleteByCode(String code) throws Exception {
+        String query = "DELETE FROM contact WHERE code=?";
+        DaoHelper.QueryParameters params = pst -> pst.setString(1, code);
+        helper.update(query, params);
+    }
 }

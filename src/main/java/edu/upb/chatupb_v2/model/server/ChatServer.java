@@ -35,6 +35,7 @@ public class ChatServer extends Thread {
 //                Mediador.getInstance().addClient(socketClient.getIp(), socketClient);
 
                 socketClient.addListener(this.socketListener);
+//                socketClient.addListener(Mediador.getInstance());
 
                 socketClient.start();
             } catch (Exception e) {

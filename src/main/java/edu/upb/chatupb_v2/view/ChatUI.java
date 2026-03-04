@@ -21,7 +21,7 @@ public class ChatUI extends javax.swing.JFrame {
     public ContactController getContactController() {
         return contactController;
     }
-    private SocketClient client;
+//    private SocketClient client;
     //    private final SocketListener externalListener;
     private final MainChatUI mainUI;
 //    private SocketClient client;
@@ -38,6 +38,7 @@ public class ChatUI extends javax.swing.JFrame {
     }
 
     public ChatUI(MainChatUI mainUI) {
+        super("Agregar Contacto");
         this.mainUI = mainUI;
         initComponents();
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -55,8 +56,7 @@ public class ChatUI extends javax.swing.JFrame {
 
         jtIp = new javax.swing.JTextField();
         jBtnConectar = new javax.swing.JButton();
-        jBtnEnviar = new javax.swing.JButton();
-        jtMensaje = new javax.swing.JTextField();
+        jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -67,42 +67,32 @@ public class ChatUI extends javax.swing.JFrame {
             }
         });
 
-        jBtnEnviar.setText("Enviar");
-        jBtnEnviar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jBtnEnviarActionPerformed(evt);
-            }
-        });
+        jLabel1.setText("Ingrese la IP:");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addGap(28, 28, 28)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addComponent(jtMensaje, javax.swing.GroupLayout.PREFERRED_SIZE, 168, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                                .addComponent(jBtnEnviar))
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addComponent(jtIp, javax.swing.GroupLayout.PREFERRED_SIZE, 168, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addGap(18, 18, 18)
-                                                .addComponent(jBtnConectar)))
-                                .addContainerGap(107, Short.MAX_VALUE))
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(33, 33, 33)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jtIp, javax.swing.GroupLayout.PREFERRED_SIZE, 229, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(30, 30, 30)
+                        .addComponent(jBtnConectar)))
+                .addContainerGap(29, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addGap(23, 23, 23)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jtIp, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jBtnConectar))
-                                .addGap(143, 143, 143)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jtMensaje, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jBtnEnviar))
-                                .addContainerGap(80, Short.MAX_VALUE))
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(16, 16, 16)
+                .addComponent(jLabel1)
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jtIp, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jBtnConectar))
+                .addContainerGap(33, Short.MAX_VALUE))
         );
 
         pack();
@@ -123,26 +113,44 @@ public class ChatUI extends javax.swing.JFrame {
 //        if (externalListener != null && externalListener != this) {
 //            client.addListener(externalListener);
 //        }
+        //-----------------------------------------------------------------------------
+//        try {
+//            String ip = jtIp.getText().trim();
+//            if (ip.isEmpty()) return;
+//
+//            client = new SocketClient(ip);
+//
+//            // Si ChatUI fue abierta desde MainChatUI, usamos su ID y nombre
+//            String id = (mainUI != null) ? mainUI.getMyUserId() : "00000001";
+//            String nombre = (mainUI != null) ? mainUI.getMyName() : "Jose";
+//
+//            Invitacion invitacion = new Invitacion(id, nombre);
+//
+//            // IMPORTANTE: el listener debe ser la UI principal para que agregue el contacto
+//            if (mainUI != null) {
+//                Mediador.getInstance().setView(mainUI);
+//            }
+//            client.addListener(Mediador.getInstance());
+//
+//            client.start();
+//            client.send(invitacion);
+//
+//            // cerramos la ventanita (opcional, pero cómodo)
+//            dispose();
+//
+//        } catch (Exception e) {
+//            System.out.println(e.getMessage());
+//        }
+        //-----------------------------------
         try {
             String ip = jtIp.getText().trim();
             if (ip.isEmpty()) return;
-
-            client = new SocketClient(ip);
 
             // Si ChatUI fue abierta desde MainChatUI, usamos su ID y nombre
             String id = (mainUI != null) ? mainUI.getMyUserId() : "00000001";
             String nombre = (mainUI != null) ? mainUI.getMyName() : "Jose";
 
-            Invitacion invitacion = new Invitacion(id, nombre);
-
-            // IMPORTANTE: el listener debe ser la UI principal para que agregue el contacto
-            if (mainUI != null) {
-                Mediador.getInstance().setView(mainUI);
-            }
-            client.addListener(Mediador.getInstance());
-
-            client.start();
-            client.send(invitacion);
+            Mediador.getInstance().invitacion(ip, id, nombre);
 
             // cerramos la ventanita (opcional, pero cómodo)
             dispose();
@@ -151,17 +159,6 @@ public class ChatUI extends javax.swing.JFrame {
             System.out.println(e.getMessage());
         }
     }//GEN-LAST:event_jBtnConectarActionPerformed
-
-    private void jBtnEnviarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBtnEnviarActionPerformed
-        // TODO add your handling code here:
-//        if(client != null){
-//            try{
-//            client.send(jtMensaje.getText().toString());
-//            }catch(Exception e){
-//
-//            }
-//        }
-    }//GEN-LAST:event_jBtnEnviarActionPerformed
 
     /**
      * @param args the command line arguments
@@ -200,42 +197,7 @@ public class ChatUI extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jBtnConectar;
-    private javax.swing.JButton jBtnEnviar;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JTextField jtIp;
-    private javax.swing.JTextField jtMensaje;
-
-//    @Override
-//    public void onMessage(SocketClient socketClient,Message message) {
-//        if(message instanceof Invitacion){
-//            Invitacion invitacion = (Invitacion) message;
-//            int respuesta = JOptionPane.showConfirmDialog(this,
-//                    "Llego la invitacion: "+ invitacion.getNombre(),
-//                    "Invitacion", JOptionPane.YES_NO_OPTION);
-//
-//            if (respuesta == JOptionPane.YES_OPTION){
-//                //acepta la invitacion
-//                Mediador.getInstance().addClient(invitacion.getIdUsuario(), socketClient);
-//                Message aceptar = new Aceptar("00000001", "Jose");
-//                Mediador.getInstance().sendMessage(invitacion.getIdUsuario(), aceptar);
-//            }else{
-//                try {
-//                    Message rechazar = new Rechazar();
-//                    socketClient.send(rechazar);
-//                }catch (Exception e){
-//                    e.printStackTrace();
-//                }
-////                Mediador.getInstance().sendMessage(invitacion.getIdUsuario(), rechazar);
-//            }
-//            if(message instanceof Offline) {
-//                Offline offline = (Offline) message;
-//                JOptionPane.showMessageDialog(this, "Offline.");
-//                Mediador.getInstance().addClient(offline.getIdUsuario(), socketClient);
-//                Mediador.getInstance().sendMessage(offline.getIdUsuario(), offline);
-//
-//                socketClient.close();
-//            }
-//        }
-//        System.out.println("Llego la invitacion");
-//
     // End of variables declaration//GEN-END:variables
 }
