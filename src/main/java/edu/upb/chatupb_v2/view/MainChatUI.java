@@ -2,8 +2,6 @@ package edu.upb.chatupb_v2.view;
 
 import edu.upb.chatupb_v2.model.entities.message.*;
 import edu.upb.chatupb_v2.model.server.Mediador;
-import edu.upb.chatupb_v2.model.server.SocketClient;
-import edu.upb.chatupb_v2.model.server.SocketListener;
 import edu.upb.chatupb_v2.controller.ContactController;
 import edu.upb.chatupb_v2.controller.MessageController;
 import edu.upb.chatupb_v2.model.entities.Contact;
@@ -17,7 +15,7 @@ import java.util.UUID;
 
 public class MainChatUI extends JFrame implements IChatView {
 
-    private final String myUserId = "00000001-0001-0001-0001-000000000001";
+    private final String myUserId;
     private final String myName;
 
     private final ContactDao contactDao = new ContactDao();
@@ -43,15 +41,31 @@ public class MainChatUI extends JFrame implements IChatView {
     // historial en memoria: code(userId) -> texto del chat
 //    private final Map<String, StringBuilder> historial = new HashMap<>();
 
-    public MainChatUI() {
+    public MainChatUI(String myUserId, String myName) {
         super("ChatUPB");
+        this.myUserId = myUserId;
 
-        String nombre = JOptionPane.showInputDialog(this, "Tu nombre:", "Usuario", JOptionPane.QUESTION_MESSAGE);
-        if (nombre == null || nombre.trim().isEmpty()) nombre = "Jose";
-        myName = nombre.trim();
+        if (myName == null) {
+            throw new IllegalArgumentException("myName no puede ser null");
+        }
+
+        String cleaned = myName.trim();
+        if (cleaned.isEmpty()) {
+            // En teoría nunca entra, porque ChatUPB_V2 obliga a escribir algo
+            throw new IllegalArgumentException("myName no puede estar vacío");
+        }
+
+        //por si en algún momento se llama mal al constructor
+        if (cleaned.length() > 60) {
+            cleaned = cleaned.substring(0, 60);
+        }
+
+        this.myName = cleaned;
+
+        Mediador.getInstance().setLocalUser(myUserId);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(950, 650);
+        setSize(950, 600);
         setLocationRelativeTo(null);
 
         construirUI();
@@ -60,7 +74,6 @@ public class MainChatUI extends JFrame implements IChatView {
         MessageController msgController = new MessageController(this, myUserId);
         setMessageController(msgController);
 
-//        cargarContactosDesdeDB();
         ContactController controller = new ContactController(this);
         setContactController(controller);
         controller.onLoad();
