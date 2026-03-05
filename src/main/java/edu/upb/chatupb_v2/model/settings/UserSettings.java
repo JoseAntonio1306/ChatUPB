@@ -38,6 +38,9 @@ public final class UserSettings {
 
     public static void clearUsername() {
         Preferences prefs = Preferences.userRoot().node(PREF_NODE);
+        if (getUsername() == null){
+
+        }
         prefs.remove(KEY_USERNAME);
     }
 }

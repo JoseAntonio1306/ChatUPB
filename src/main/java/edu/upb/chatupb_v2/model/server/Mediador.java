@@ -4,6 +4,7 @@ import edu.upb.chatupb_v2.model.dao.ContactDao;
 import edu.upb.chatupb_v2.model.entities.Contact;
 import edu.upb.chatupb_v2.model.entities.message.*;
 import edu.upb.chatupb_v2.controller.exception.OperationException;
+import edu.upb.chatupb_v2.model.settings.UserSettings;
 import edu.upb.chatupb_v2.view.IChatView;
 
 import javax.swing.*;
@@ -104,7 +105,10 @@ public class Mediador implements SocketListener{
             }
 
 
-            String myId = (localUserId == null || localUserId.isBlank()) ? "00000001-0001-0001-0001-000000000001" : localUserId;
+            String myId = localUserId;
+            if (myId == null || myId.isBlank()) {
+                myId = UserSettings.getUserId();
+            }
             pendingHelloContacts.add(idUsuario);
             pendingHelloByIp.put(ip, idUsuario);
 
@@ -178,35 +182,94 @@ public class Mediador implements SocketListener{
         if (senderId != null) {
             this.clients.put(senderId, socketClient);
         }
-
+//region hello before
+//        if (message instanceof Hello hello) {
+//            System.out.println("Recibido HELLO de: " + hello.getIdUsuario());
+//
+//            // Guardamos/actualizamos IP del emisor si ya existe en contactos
+//            try {
+//                Contact existing = contactDao.findByCode(hello.getIdUsuario());
+//                if (existing != null) {
+//                    existing.setIp(socketClient.getIp());
+//                    contactDao.update(existing);
+//                }
+//                if (existing == null) {
+//
+//                }
+//            } catch (Exception ignored) {}
+//
+//            notifyContactStatus(hello.getIdUsuario(), true);
+//
+//            // Responder AcceptHello automaticamente
+//            String id = hello.getIdUsuario();
+//            String myId = localUserId;
+//            if (myId == null || myId.isBlank()) {
+//                myId = UserSettings.getUserId();
+//            }
+//            try {
+//                socketClient.send(new AcceptHello(myId));
+//                System.out.println("Respondido ACCEPT_HELLO a " + hello.getIdUsuario());
+//            } catch (Exception e) {
+//                System.out.println("No se pudo responder ACCEPT_HELLO: " + e.getMessage());
+//            }
+//            return;
+//        }
+//endregion
         if (message instanceof Hello hello) {
-            System.out.println("Recibido HELLO de: " + hello.getIdUsuario());
+            System.out.println("Recibido Hello de: " + hello.getIdUsuario());
 
-            // Guardamos/actualizamos IP del emisor si ya existe en contactos
+            String id = hello.getIdUsuario();
+
+            // 1) Buscar en BD si el contacto existe
+            Contact existing = null;
             try {
-                Contact existing = contactDao.findByCode(hello.getIdUsuario());
-                if (existing != null) {
-                    existing.setIp(socketClient.getIp());
-                    contactDao.update(existing);
+                existing = contactDao.findByCode(id);
+            } catch (Exception e) {
+                System.out.println("Error consultando BD: " + e.getMessage());
+            }
+
+            // 2) Si no existe en BD se rechaza
+            if (existing == null) {
+                System.out.println("Hello rechazado: " + id);
+
+                String myId = localUserId;
+                if (myId == null || myId.isBlank()) {
+                    myId = UserSettings.getUserId();
                 }
+
+                try {
+                    socketClient.send(new RejectHello());
+                    System.out.println("Se rechazo el hello a: " + id);
+                } catch (Exception e) {
+                    System.out.println("No se pudo rechazar el hello: " + e.getMessage());
+                }
+                return;
+            }
+
+            // 3) Si existe en db lo aceptamos, actualizamos la IP y se lo marca online
+            try {
+                existing.setIp(socketClient.getIp());
+                contactDao.update(existing);
             } catch (Exception ignored) {}
 
-            notifyContactStatus(hello.getIdUsuario(), true);
+            notifyContactStatus(senderId, true);
 
-            // Responder AcceptHello automaticamente
-            String id = hello.getIdUsuario();
-            String myId = (localUserId == null || localUserId.isBlank()) ? "00000001-0001-0001-0001-000000000001" : localUserId;
+            String myId = localUserId;
+            if (myId == null || myId.isBlank()) {
+                myId = UserSettings.getUserId();
+            }
+
             try {
                 socketClient.send(new AcceptHello(myId));
-                System.out.println("Respondido ACCEPT_HELLO a " + hello.getIdUsuario());
+                System.out.println("Se acepto el hello a: " + senderId);
             } catch (Exception e) {
-                System.out.println("No se pudo responder ACCEPT_HELLO: " + e.getMessage());
+                System.out.println("No se pudo aceptar el hello: " + e.getMessage());
             }
             return;
         }
 
         if (message instanceof AcceptHello acceptHello) {
-            System.out.println("ACCEPT_HELLO recibido de: " + acceptHello.getIdUsuario() );
+            System.out.println("El hello fue aceptado por: " + acceptHello.getIdUsuario() );
             pendingHelloContacts.remove(acceptHello.getIdUsuario());
             pendingHelloByIp.remove(socketClient.getIp());
             notifyContactStatus(acceptHello.getIdUsuario(), true);
@@ -218,7 +281,7 @@ public class Mediador implements SocketListener{
             String contactCode = (ip == null) ? null : pendingHelloByIp.remove(ip);
             if (contactCode != null) {
                 pendingHelloContacts.remove(contactCode);
-                System.out.println("REJECT_HELLO recibido de " + contactCode );
+                System.out.println("Te rechazaron el hello de " + contactCode );
                 notifyContactStatus(contactCode, false);
             } else {
                 System.out.println("REJECT_HELLO recibido");
