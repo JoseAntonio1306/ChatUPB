@@ -1,5 +1,6 @@
-package edu.upb.chatupb_v2.model;
+package edu.upb.chatupb_v2.model.dao;
 
+import edu.upb.chatupb_v2.model.db.DaoHelper;
 import edu.upb.chatupb_v2.model.entities.Contact;
 
 import java.net.ConnectException;
@@ -102,5 +103,10 @@ public class ContactDao {
         existing.setIp(ip);
         update(existing);
         return existing;
+    }
+    public void deleteByCode(String code) throws Exception {
+        String query = "DELETE FROM contact WHERE code=?";
+        DaoHelper.QueryParameters params = pst -> pst.setString(1, code);
+        helper.update(query, params);
     }
 }

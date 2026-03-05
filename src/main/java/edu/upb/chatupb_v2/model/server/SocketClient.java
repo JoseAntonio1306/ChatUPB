@@ -2,9 +2,9 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package edu.upb.chatupb_v2.bl.server;
+package edu.upb.chatupb_v2.model.server;
 
-import edu.upb.chatupb_v2.bl.message.*;
+import edu.upb.chatupb_v2.model.entities.message.*;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -82,10 +82,37 @@ public class SocketClient extends Thread {
                         notificar(rechazo);
                         break;
                     }
+                    case "004": {
+                        System.out.println("Es hello");
+                        Hello hello = Hello.parse(message);
+                        hello.setIp(ip);
+                        notificar(hello);
+                        break;
+                    }
+                    case "005": {
+                        System.out.println("Es aceptación del hello");
+                        AcceptHello acceptHello = AcceptHello.parse(message);
+                        acceptHello.setIp(ip);
+                        notificar(acceptHello);
+                        break;
+                    }
+                    case "006": {
+                        System.out.println("Es rechazo del hello");
+                        RejectHello rejectHello = RejectHello.parse(message);
+                        rejectHello.setIp(ip);
+                        notificar(rejectHello);
+                        break;
+                    }
                     case "007": {
                         System.out.println("Es mensaje");
                         Chat chat = Chat.parse(message);
                         notificar(chat);
+                        break;
+                    }
+                    case "008": {
+                        System.out.println("Es confirmación de que llego el mensaje");
+                        ReceiveMessage receiveMessage = ReceiveMessage.parse(message);
+                        notificar(receiveMessage);
                         break;
                     }
                     case "0018": {

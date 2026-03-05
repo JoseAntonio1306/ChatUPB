@@ -1,4 +1,6 @@
-package edu.upb.chatupb_v2.model;
+package edu.upb.chatupb_v2.model.db;
+
+import edu.upb.chatupb_v2.model.Model;
 
 import java.net.ConnectException;
 import java.sql.*;
@@ -65,7 +67,7 @@ public class DaoHelper<T> {
         }
     }
 
-    protected void insert(String query, QueryParameters params, Model model) throws Exception {
+    public void insert(String query, QueryParameters params, Model model) throws Exception {
         try (Connection conn = ConnectionDB.getInstance().getConection();
              PreparedStatement st = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -90,7 +92,7 @@ public class DaoHelper<T> {
         }
     }
 
-    protected void update(String query, QueryParameters params) throws ConnectException, SQLException {
+    public void update(String query, QueryParameters params) throws ConnectException, SQLException {
         try (Connection conn = ConnectionDB.getInstance().getConection();
              PreparedStatement st = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -109,7 +111,7 @@ public class DaoHelper<T> {
         }
     }
 
-    int executeQueryCount(String query, QueryParameters params) throws ConnectException, SQLException {
+    public int executeQueryCount(String query, QueryParameters params) throws ConnectException, SQLException {
         try (Connection conn = ConnectionDB.getInstance().getConection();
              PreparedStatement st = conn.prepareStatement(query)) {
 
@@ -139,7 +141,7 @@ public class DaoHelper<T> {
         }
     }
 
-    protected T executeProcedureStore(String query, QueryParameters params, ResultProcedureReader<T> reader) throws Exception {
+    public T executeProcedureStore(String query, QueryParameters params, ResultProcedureReader<T> reader) throws Exception {
         try (Connection conn = ConnectionDB.getInstance().getConection();
              CallableStatement st = conn.prepareCall(query)) {
 

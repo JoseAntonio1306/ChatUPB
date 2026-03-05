@@ -1,7 +1,12 @@
-package edu.upb.chatupb_v2.bl.message;
+package edu.upb.chatupb_v2.model.entities.message;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.regex.Pattern;
 
+@Getter
+@Setter
 public class Offline extends Message{
     private String idUsuario;
 
@@ -24,13 +29,6 @@ public class Offline extends Message{
     @Override
     public String generarTrama() {
         return getCodigo() +"|" +idUsuario + System.lineSeparator();
-    }
-
-    public String getIdUsuario() {
-        return idUsuario;
-    }
-    public void setIdUsuario(String idUsuario) {
-        this.idUsuario = idUsuario;
     }
 
 }

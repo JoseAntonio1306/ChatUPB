@@ -1,5 +1,6 @@
-package edu.upb.chatupb_v2.model;
+package edu.upb.chatupb_v2.model.dao;
 
+import edu.upb.chatupb_v2.model.db.DaoHelper;
 import edu.upb.chatupb_v2.model.entities.Message;
 
 import java.sql.PreparedStatement;
