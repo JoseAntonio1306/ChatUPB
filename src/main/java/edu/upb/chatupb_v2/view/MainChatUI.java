@@ -35,6 +35,7 @@ public class MainChatUI extends JFrame implements IChatView {
     private final JButton btnEnviar = new JButton("Enviar");
 
     private final JButton btnOffline = new JButton("Offline");
+    private final JButton btnCobrar = new JButton("Cobrar");
 
     private Contact contactoSeleccionado = null;
 
@@ -105,8 +106,9 @@ public class MainChatUI extends JFrame implements IChatView {
 
         JPanel panelHeader = new JPanel(new BorderLayout(8, 8));
         lblNombreContacto.setFont(lblNombreContacto.getFont().deriveFont(Font.BOLD, 16f));
-        panelHeader.add(lblNombreContacto, BorderLayout.CENTER);
+        panelHeader.add(lblNombreContacto, BorderLayout.WEST);
         panelHeader.add(btnOffline, BorderLayout.EAST);
+        panelHeader.add(btnCobrar, BorderLayout.CENTER);
         panelDer.add(panelHeader, BorderLayout.NORTH);
 
         txtChat.setEditable(false);
@@ -147,6 +149,7 @@ public class MainChatUI extends JFrame implements IChatView {
         btnEnviar.addActionListener(e -> enviarMensaje());
         txtMensaje.addActionListener(e -> enviarMensaje());
         btnOffline.addActionListener(e -> mandarOffline());
+        btnCobrar.addActionListener(e -> abrirUICobrar());
     }
 
     private void conectarPorHello() {
@@ -176,6 +179,11 @@ public class MainChatUI extends JFrame implements IChatView {
 
     private void abrirUIAgregarContacto() {
         ChatUI ui = new ChatUI(this);
+        ui.setVisible(true);
+    }
+
+    private void abrirUICobrar() {
+        CobrarUI ui = new CobrarUI();
         ui.setVisible(true);
     }
 

@@ -100,48 +100,7 @@ public class ChatUI extends javax.swing.JFrame {
 
     private void jBtnConectarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBtnConectarActionPerformed
         // TODO add your handling code here:
-//        try {
-//            client = new SocketClient(jtIp.getText().toString());
-//            Invitacion m1 = new Invitacion("001", "Jose");
-//            client.addListener((SocketListener) this);
-//            client.start();
-//            client.send(m1);
-//        } catch (Exception e) {
-//            System.out.println(e.getMessage());
-//        }
 //
-//        if (externalListener != null && externalListener != this) {
-//            client.addListener(externalListener);
-//        }
-        //-----------------------------------------------------------------------------
-//        try {
-//            String ip = jtIp.getText().trim();
-//            if (ip.isEmpty()) return;
-//
-//            client = new SocketClient(ip);
-//
-//            // Si ChatUI fue abierta desde MainChatUI, usamos su ID y nombre
-//            String id = (mainUI != null) ? mainUI.getMyUserId() : "00000001";
-//            String nombre = (mainUI != null) ? mainUI.getMyName() : "Jose";
-//
-//            Invitacion invitacion = new Invitacion(id, nombre);
-//
-//            // IMPORTANTE: el listener debe ser la UI principal para que agregue el contacto
-//            if (mainUI != null) {
-//                Mediador.getInstance().setView(mainUI);
-//            }
-//            client.addListener(Mediador.getInstance());
-//
-//            client.start();
-//            client.send(invitacion);
-//
-//            // cerramos la ventanita (opcional, pero cómodo)
-//            dispose();
-//
-//        } catch (Exception e) {
-//            System.out.println(e.getMessage());
-//        }
-        //-----------------------------------
         try {
             String ip = jtIp.getText().trim();
             if (ip.isEmpty()) return;
