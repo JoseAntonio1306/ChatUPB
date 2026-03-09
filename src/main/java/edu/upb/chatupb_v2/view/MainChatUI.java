@@ -52,7 +52,7 @@ public class MainChatUI extends JFrame implements IChatView {
 
         String cleaned = myName.trim();
         if (cleaned.isEmpty()) {
-            // En teoría nunca entra, porque ChatUPB_V2 obliga a escribir algo
+            // En teoría nunca entra
             throw new IllegalArgumentException("myName no puede estar vacío");
         }
 

@@ -25,7 +25,7 @@ public class ChatUPB_V2 {
                         JOptionPane.QUESTION_MESSAGE
                 );
 
-                if (input == null) { // canceló
+                if (input == null) {
                     return;
                 }
 
@@ -44,7 +44,7 @@ public class ChatUPB_V2 {
                 if (input.length() > 60) {
                     JOptionPane.showMessageDialog(
                             null,
-                            "El nombre no puede tener más de 60 caracteres. (Tienes " + input.length() + ")",
+                            "El nombre no puede tener más de 60 caracteres.",
                             "Límite de caracteres",
                             JOptionPane.WARNING_MESSAGE
                     );
