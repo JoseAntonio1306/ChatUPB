@@ -115,6 +115,36 @@ public class SocketClient extends Thread {
                         notificar(receiveMessage);
                         break;
                     }
+                    case "009": {
+                        System.out.println("Es eliminacion de mensaje");
+                        DeleteMessage deleteMessage = DeleteMessage.parse(message);
+                        notificar(deleteMessage);
+                        break;
+                    }
+                    case "010": {
+                        System.out.println("Es zumbido");
+                        Zumbido zumbido = Zumbido.parse(message);
+                        notificar(zumbido);
+                        break;
+                    }
+                    case "011": {
+                        System.out.println("Es mensaje fijado");
+                        FijarMensaje fijarMensaje = FijarMensaje.parse(message);
+                        notificar(fijarMensaje);
+                        break;
+                    }
+                    case "012": {
+                        System.out.println("Es mensaje unico");
+                        MensajeUnico mensajeUnico = MensajeUnico.parse(message);
+                        notificar(mensajeUnico);
+                        break;
+                    }
+                    case "013": {
+                        System.out.println("Es cambio de tema");
+                        Tema tema = Tema.parse(message);
+                        notificar(tema);
+                        break;
+                    }
                     case "0018": {
                         System.out.println("Esta fuera de linea");
                         Offline offline = Offline.parse(message);
