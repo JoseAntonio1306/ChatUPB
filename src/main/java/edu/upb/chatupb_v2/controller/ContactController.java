@@ -24,4 +24,18 @@ public class ContactController {
         }
 
     }
+
+    public Contact saveContact(String code, String name, String ip) {
+        try {
+            return contactDao.upsert(code, name, ip);
+        } catch (Exception e) {
+            System.out.println("Error guardando contacto: " + e.getMessage());
+            return Contact.builder()
+                    .code(code)
+                    .name(name)
+                    .ip(ip)
+                    .stateConnect(false)
+                    .build();
+        }
+    }
 }

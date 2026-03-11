@@ -307,13 +307,21 @@ public class Mediador implements SocketListener{
             // seguimos, para reenviar a la vista
         }
 
-        // Recomendación: cuando llega invitación, persistir y si se rechaza, eliminar
+        // cuando llega invitación, persistir y si se rechaza, eliminar
         if (message instanceof Invitacion inv) {
             try {
                 contactDao.upsert(inv.getIdUsuario(), inv.getNombre(), socketClient.getIp());
                 pendingInvitations.add(inv.getIdUsuario());
             } catch (Exception e) {
                 System.out.println("No se pudo guardar invitación entrante: " + e.getMessage());
+            }
+        }
+
+        if (message instanceof EnviarContacto enviarContacto) {
+            try {
+                contactDao.upsert(enviarContacto.getIdUsuario(), enviarContacto.getNombre(), socketClient.getIp());
+            } catch (Exception e) {
+                System.out.println("No se pudo guardar contacto entrante: " + e.getMessage());
             }
         }
 
@@ -335,6 +343,7 @@ public class Mediador implements SocketListener{
         if (message instanceof Aceptar ac) return ac.getIdUsuario();
         if (message instanceof Chat ch) return ch.getIdUsuario();
         if (message instanceof Offline off) return off.getIdUsuario();
+        if (message instanceof EnviarContacto ec) return ec.getIdUsuario();
         return null;
     }
 

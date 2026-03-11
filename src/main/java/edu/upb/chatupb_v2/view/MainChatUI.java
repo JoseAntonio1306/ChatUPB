@@ -1,5 +1,6 @@
 package edu.upb.chatupb_v2.view;
 
+import edu.upb.chatupb_v2.controller.AnalizadorController;
 import edu.upb.chatupb_v2.model.entities.message.*;
 import edu.upb.chatupb_v2.model.server.Mediador;
 import edu.upb.chatupb_v2.controller.ContactController;
@@ -10,6 +11,7 @@ import edu.upb.chatupb_v2.model.dao.ContactDao;
 import javax.swing.*;
 import java.awt.*;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -17,6 +19,8 @@ public class MainChatUI extends JFrame implements IChatView {
 
     private final String myUserId;
     private final String myName;
+
+    private final AnalizadorController textAnalyzer = new AnalizadorController();
 
     private final ContactDao contactDao = new ContactDao();
     private ContactController contactController;
@@ -35,6 +39,7 @@ public class MainChatUI extends JFrame implements IChatView {
     private final JButton btnEnviar = new JButton("Enviar");
 
     private final JButton btnOffline = new JButton("Offline");
+    private final JButton btnEnviarContacto = new JButton("Enviar contacto");
 
     private Contact contactoSeleccionado = null;
 
@@ -105,8 +110,9 @@ public class MainChatUI extends JFrame implements IChatView {
 
         JPanel panelHeader = new JPanel(new BorderLayout(8, 8));
         lblNombreContacto.setFont(lblNombreContacto.getFont().deriveFont(Font.BOLD, 16f));
-        panelHeader.add(lblNombreContacto, BorderLayout.CENTER);
+        panelHeader.add(lblNombreContacto, BorderLayout.WEST);
         panelHeader.add(btnOffline, BorderLayout.EAST);
+        panelHeader.add(btnEnviarContacto, BorderLayout.CENTER);
         panelDer.add(panelHeader, BorderLayout.NORTH);
 
         txtChat.setEditable(false);
@@ -147,6 +153,7 @@ public class MainChatUI extends JFrame implements IChatView {
         btnEnviar.addActionListener(e -> enviarMensaje());
         txtMensaje.addActionListener(e -> enviarMensaje());
         btnOffline.addActionListener(e -> mandarOffline());
+        btnEnviarContacto.addActionListener(e -> enviarContacto());
     }
 
     private void conectarPorHello() {
@@ -174,6 +181,67 @@ public class MainChatUI extends JFrame implements IChatView {
     }
     //endregion
 
+    private void enviarContacto() {
+        if (contactoSeleccionado == null) {
+            JOptionPane.showMessageDialog(this, "Primero selecciona el amigo al que le vas a pasar el contacto.");
+            return;
+        }
+
+        List<Contact> contactosParaCompartir = new ArrayList<>();
+        for (int i = 0; i < contactosModel.size(); i++) {
+            Contact c = contactosModel.get(i);
+            if (!c.getCode().equals(contactoSeleccionado.getCode())) {
+                contactosParaCompartir.add(c);
+            }
+        }
+
+        if (contactosParaCompartir.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No tienes otro contacto para compartir.");
+            return;
+        }
+
+        String[] opciones = new String[contactosParaCompartir.size()];
+        for (int i = 0; i < contactosParaCompartir.size(); i++) {
+            Contact c = contactosParaCompartir.get(i);
+            opciones[i] = c.getName();
+        }
+
+        String opcionElegida = (String) JOptionPane.showInputDialog(
+                this,
+                "Selecciona el contacto que quieres compartir:",
+                "Pasar contacto",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                opciones,
+                opciones[0]
+        );
+
+        if (opcionElegida == null) {
+            return;
+        }
+
+        Contact contactoACompartir = null;
+        for (int i = 0; i < contactosParaCompartir.size(); i++) {
+            if (opciones[i].equals(opcionElegida)) {
+                contactoACompartir = contactosParaCompartir.get(i);
+                break;
+            }
+        }
+
+        if (contactoACompartir == null) {
+            return;
+        }
+
+        Message compartir = new EnviarContacto(
+                contactoACompartir.getCode(),
+                contactoACompartir.getName(),
+                contactoACompartir.getIp() == null ? "" : contactoACompartir.getIp()
+        );
+
+        Mediador.getInstance().sendMessage(contactoSeleccionado.getCode(), compartir);
+        JOptionPane.showMessageDialog(this, "Contacto enviado correctamente.");
+    }
+
     private void abrirUIAgregarContacto() {
         ChatUI ui = new ChatUI(this);
         ui.setVisible(true);
@@ -188,6 +256,30 @@ public class MainChatUI extends JFrame implements IChatView {
         Mediador.getInstance().sendMessage(contactoSeleccionado.getCode(), offline);
     }
 
+//    private void enviarMensaje() {
+//        String texto = txtMensaje.getText();
+//        if (texto == null) return;
+//        texto = texto.trim();
+//        if (texto.isEmpty()) return;
+//
+//        if (contactoSeleccionado == null) {
+//            JOptionPane.showMessageDialog(this, "Primero selecciona un contacto.");
+//            return;
+//        }
+//
+//        txtMensaje.setText("");
+//
+//        String messageId = UUID.randomUUID().toString();
+//
+//        if (messageController != null) {
+//            messageController.onOutgoingMessage(contactoSeleccionado, messageId, texto);
+//            messageController.onOpenConversation(contactoSeleccionado); // recargar historial
+//        }
+//
+//        Message chat = new Chat(myUserId, messageId, texto);
+//        Mediador.getInstance().sendMessage(contactoSeleccionado.getCode(), chat);
+//    }
+
     private void enviarMensaje() {
         String texto = txtMensaje.getText();
         if (texto == null) return;
@@ -199,16 +291,18 @@ public class MainChatUI extends JFrame implements IChatView {
             return;
         }
 
+        String textoProcesado = textAnalyzer.analyze(texto);
+
         txtMensaje.setText("");
 
         String messageId = UUID.randomUUID().toString();
 
         if (messageController != null) {
-            messageController.onOutgoingMessage(contactoSeleccionado, messageId, texto);
-            messageController.onOpenConversation(contactoSeleccionado); // recargar historial
+            messageController.onOutgoingMessage(contactoSeleccionado, messageId, textoProcesado);
+            messageController.onOpenConversation(contactoSeleccionado);
         }
 
-        Message chat = new Chat(myUserId, messageId, texto);
+        Message chat = new Chat(myUserId, messageId, textoProcesado);
         Mediador.getInstance().sendMessage(contactoSeleccionado.getCode(), chat);
     }
 
@@ -238,13 +332,20 @@ public class MainChatUI extends JFrame implements IChatView {
         contactosModel.addElement(contact);
     }
 
+//    private Contact persistContact(String code, String name, String ip) {
+//        try {
+//            return contactDao.upsert(code, name, ip);
+//        } catch (Exception e) {
+//            System.err.println("No se pudo guardar/actualizar contacto: " + e.getMessage());
+//            return Contact.builder().code(code).name(name).ip(ip).stateConnect(false).build();
+//        }
+//    }
+
     private Contact persistContact(String code, String name, String ip) {
-        try {
-            return contactDao.upsert(code, name, ip);
-        } catch (Exception e) {
-            System.err.println("No se pudo guardar/actualizar contacto: " + e.getMessage());
+        if (contactController == null) {
             return Contact.builder().code(code).name(name).ip(ip).stateConnect(false).build();
         }
+        return contactController.saveContact(code, name, ip);
     }
 
     private void handleCommon(Message message) {
@@ -344,6 +445,17 @@ public class MainChatUI extends JFrame implements IChatView {
             contact.setStateConnect(true);
             upsertContactoEnUI(contact);
 
+            return;
+        }
+
+        if (message instanceof EnviarContacto enviarContacto) {
+            Contact contact = persistContact(
+                    enviarContacto.getIdUsuario(),
+                    enviarContacto.getNombre(),
+                    enviarContacto.getIp()
+            );
+            upsertContactoEnUI(contact);
+            JOptionPane.showMessageDialog(this, "Recibiste el contacto de: " + contact.getName());
             return;
         }
 

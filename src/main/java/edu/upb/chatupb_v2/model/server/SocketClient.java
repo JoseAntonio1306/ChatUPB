@@ -121,6 +121,13 @@ public class SocketClient extends Thread {
                         notificar(offline);
                         break;
                     }
+                    case "020": {
+                        System.out.println("Enviar contacto");
+                        EnviarContacto enviarContacto = EnviarContacto.parse(message);
+                        enviarContacto.setIp(ip);
+                        notificar(enviarContacto);
+                        break;
+                    }
                 }
             }
 
