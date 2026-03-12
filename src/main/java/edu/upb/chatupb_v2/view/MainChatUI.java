@@ -1,21 +1,49 @@
 package edu.upb.chatupb_v2.view;
 
 import edu.upb.chatupb_v2.controller.AnalizadorController;
-import edu.upb.chatupb_v2.model.entities.message.*;
-import edu.upb.chatupb_v2.model.server.Mediador;
 import edu.upb.chatupb_v2.controller.ContactController;
 import edu.upb.chatupb_v2.controller.MessageController;
-import edu.upb.chatupb_v2.model.entities.Contact;
 import edu.upb.chatupb_v2.model.dao.ContactDao;
+import edu.upb.chatupb_v2.model.entities.Contact;
+import edu.upb.chatupb_v2.model.entities.Message;
+import edu.upb.chatupb_v2.model.entities.message.*;
+import edu.upb.chatupb_v2.model.server.Mediador;
+import edu.upb.chatupb_v2.view.components.RoundButton;
+import edu.upb.chatupb_v2.view.components.RoundedPanel;
 
 import javax.swing.*;
 import java.awt.*;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 public class MainChatUI extends JFrame implements IChatView {
+
+    private static final Color COLOR_APP_BACKGROUND = new Color(243, 246, 251);
+    private static final Color COLOR_CHAT_BACKGROUND = new Color(248, 250, 252);
+
+    private static final Color COLOR_HEADER = new Color(30, 41, 59);
+    private static final Color COLOR_HEADER_TEXT = Color.WHITE;
+
+    private static final Color COLOR_OUTGOING = new Color(232, 240, 255);
+    private static final Color COLOR_INCOMING = Color.WHITE;
+
+    private static final Color COLOR_BORDER = new Color(226, 232, 240);
+    private static final Color COLOR_META = new Color(100, 116, 139);
+
+    private static final Color COLOR_ACCENT = new Color(79, 70, 229);
+    private static final Color COLOR_SEND_BUTTON = new Color(67, 56, 202);
+    private static final Color COLOR_SEND_BUTTON_HOVER = new Color(79, 70, 229);
+    private static final Color COLOR_SEND_BUTTON_PRESSED = new Color(55, 48, 163);
+
+    private static final DateTimeFormatter DATABASE_FORMAT =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter HOUR_FORMAT =
+            DateTimeFormatter.ofPattern("HH:mm");
 
     private final String myUserId;
     private final String myName;
@@ -33,18 +61,16 @@ public class MainChatUI extends JFrame implements IChatView {
     private final JButton btnConectar = new JButton("Conectar");
 
     private final JLabel lblNombreContacto = new JLabel("Nombre del contacto");
-    private final JTextArea txtChat = new JTextArea();
+    private final JPanel panelMensajes = new JPanel();
+    private final JScrollPane scrollMensajes = new JScrollPane(panelMensajes);
 
-    private final JTextField txtMensaje = new JTextField();
-    private final JButton btnEnviar = new JButton("Enviar");
+    private final JTextArea txtMensaje = new JTextArea(1, 20);
+    private final JButton btnEnviar = new RoundButton("Enviar");
 
     private final JButton btnOffline = new JButton("Offline");
     private final JButton btnEnviarContacto = new JButton("Enviar contacto");
 
     private Contact contactoSeleccionado = null;
-
-    // historial en memoria: code(userId) -> texto del chat
-//    private final Map<String, StringBuilder> historial = new HashMap<>();
 
     public MainChatUI(String myUserId, String myName) {
         super("ChatUPB");
@@ -56,11 +82,9 @@ public class MainChatUI extends JFrame implements IChatView {
 
         String cleaned = myName.trim();
         if (cleaned.isEmpty()) {
-            // En teoría nunca entra, porque ChatUPB_V2 obliga a escribir algo
             throw new IllegalArgumentException("myName no puede estar vacío");
         }
 
-        //por si en algún momento se llama mal al constructor
         if (cleaned.length() > 60) {
             cleaned = cleaned.substring(0, 60);
         }
@@ -107,19 +131,53 @@ public class MainChatUI extends JFrame implements IChatView {
 
         JPanel panelDer = new JPanel(new BorderLayout(8, 8));
         panelDer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        panelDer.setBackground(COLOR_CHAT_BACKGROUND);
 
         JPanel panelHeader = new JPanel(new BorderLayout(8, 8));
+        panelHeader.setBackground(COLOR_HEADER);
+        panelHeader.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+
         lblNombreContacto.setFont(lblNombreContacto.getFont().deriveFont(Font.BOLD, 16f));
         panelHeader.add(lblNombreContacto, BorderLayout.WEST);
-        panelHeader.add(btnOffline, BorderLayout.EAST);
         panelHeader.add(btnEnviarContacto, BorderLayout.CENTER);
+        panelHeader.add(btnOffline, BorderLayout.EAST);
         panelDer.add(panelHeader, BorderLayout.NORTH);
 
-        txtChat.setEditable(false);
-        panelDer.add(new JScrollPane(txtChat), BorderLayout.CENTER);
+        panelMensajes.setLayout(new BoxLayout(panelMensajes, BoxLayout.Y_AXIS));
+        panelMensajes.setBackground(COLOR_CHAT_BACKGROUND);
+        panelMensajes.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
 
-        JPanel panelEnviar = new JPanel(new BorderLayout(8, 8));
-        panelEnviar.add(txtMensaje, BorderLayout.CENTER);
+        scrollMensajes.setBorder(null);
+        scrollMensajes.getVerticalScrollBar().setUnitIncrement(16);
+        scrollMensajes.getViewport().setBackground(COLOR_CHAT_BACKGROUND);
+        panelDer.add(scrollMensajes, BorderLayout.CENTER);
+
+        txtMensaje.setLineWrap(true);
+        txtMensaje.setWrapStyleWord(true);
+        txtMensaje.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        txtMensaje.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+        txtMensaje.setOpaque(false);
+
+        JScrollPane scrollInput = new JScrollPane(txtMensaje);
+        scrollInput.setBorder(null);
+        scrollInput.setOpaque(false);
+        scrollInput.getViewport().setOpaque(false);
+        scrollInput.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollInput.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollInput.setPreferredSize(new Dimension(100, 46));
+
+        RoundedPanel cajaMensaje = new RoundedPanel(24);
+        cajaMensaje.setLayout(new BorderLayout());
+        cajaMensaje.setBackground(Color.WHITE);
+        cajaMensaje.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
+        cajaMensaje.add(scrollInput, BorderLayout.CENTER);
+
+        btnEnviar.setPreferredSize(new Dimension(46, 46));
+
+        JPanel panelEnviar = new JPanel(new BorderLayout(10, 0));
+        panelEnviar.setBackground(COLOR_HEADER);
+        panelEnviar.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
+        panelEnviar.add(cajaMensaje, BorderLayout.CENTER);
         panelEnviar.add(btnEnviar, BorderLayout.EAST);
         panelDer.add(panelEnviar, BorderLayout.SOUTH);
 
@@ -134,11 +192,12 @@ public class MainChatUI extends JFrame implements IChatView {
 
         listaContactos.addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) return;
+
             contactoSeleccionado = listaContactos.getSelectedValue();
 
             if (contactoSeleccionado == null) {
                 lblNombreContacto.setText("Nombre del contacto");
-                txtChat.setText("");
+                limpiarPanelMensajes();
                 return;
             }
 
@@ -146,14 +205,36 @@ public class MainChatUI extends JFrame implements IChatView {
             if (messageController != null) {
                 messageController.onOpenConversation(contactoSeleccionado);
             } else {
-                txtChat.setText("");
+                limpiarPanelMensajes();
             }
         });
 
         btnEnviar.addActionListener(e -> enviarMensaje());
-        txtMensaje.addActionListener(e -> enviarMensaje());
+        configurarAtajosDeTeclado();
         btnOffline.addActionListener(e -> mandarOffline());
         btnEnviarContacto.addActionListener(e -> enviarContacto());
+    }
+
+    private void configurarAtajosDeTeclado() {
+        InputMap inputMap = txtMensaje.getInputMap(JComponent.WHEN_FOCUSED);
+        ActionMap actionMap = txtMensaje.getActionMap();
+
+        inputMap.put(KeyStroke.getKeyStroke("ENTER"), "enviarMensaje");
+        inputMap.put(KeyStroke.getKeyStroke("shift ENTER"), "saltoLinea");
+
+        actionMap.put("enviarMensaje", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                enviarMensaje();
+            }
+        });
+
+        actionMap.put("saltoLinea", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                txtMensaje.append("\n");
+            }
+        });
     }
 
     private void conectarPorHello() {
@@ -161,16 +242,17 @@ public class MainChatUI extends JFrame implements IChatView {
             JOptionPane.showMessageDialog(this, "Primero selecciona un contacto.");
             return;
         }
+
         System.out.println("Solicitando HELLO a: " + contactoSeleccionado.getCode());
         Mediador.getInstance().checkPresence(contactoSeleccionado.getCode());
     }
-    //region metodo cargarContactosDesdeDB sin usar
+
     private void cargarContactosDesdeDB() {
         contactosModel.clear();
         try {
             List<Contact> contactos = contactDao.findAll();
             for (Contact c : contactos) {
-                c.setStateConnect(false); // estado en runtime
+                c.setStateConnect(false);
                 contactosModel.addElement(c);
             }
         } catch (SQLException e) {
@@ -179,11 +261,11 @@ public class MainChatUI extends JFrame implements IChatView {
             e.printStackTrace();
         }
     }
-    //endregion
 
     private void enviarContacto() {
         if (contactoSeleccionado == null) {
-            JOptionPane.showMessageDialog(this, "Primero selecciona el amigo al que le vas a pasar el contacto.");
+            JOptionPane.showMessageDialog(this,
+                    "Primero selecciona el amigo al que le vas a pasar el contacto.");
             return;
         }
 
@@ -232,7 +314,7 @@ public class MainChatUI extends JFrame implements IChatView {
             return;
         }
 
-        Message compartir = new EnviarContacto(
+        edu.upb.chatupb_v2.model.entities.message.Message compartir = new EnviarContacto(
                 contactoACompartir.getCode(),
                 contactoACompartir.getName(),
                 contactoACompartir.getIp() == null ? "" : contactoACompartir.getIp()
@@ -252,38 +334,16 @@ public class MainChatUI extends JFrame implements IChatView {
             JOptionPane.showMessageDialog(this, "Primero selecciona un contacto.");
             return;
         }
-        Message offline = new Offline(myUserId);
+
+        edu.upb.chatupb_v2.model.entities.message.Message offline = new Offline(myUserId);
         Mediador.getInstance().sendMessage(contactoSeleccionado.getCode(), offline);
     }
 
-//    private void enviarMensaje() {
-//        String texto = txtMensaje.getText();
-//        if (texto == null) return;
-//        texto = texto.trim();
-//        if (texto.isEmpty()) return;
-//
-//        if (contactoSeleccionado == null) {
-//            JOptionPane.showMessageDialog(this, "Primero selecciona un contacto.");
-//            return;
-//        }
-//
-//        txtMensaje.setText("");
-//
-//        String messageId = UUID.randomUUID().toString();
-//
-//        if (messageController != null) {
-//            messageController.onOutgoingMessage(contactoSeleccionado, messageId, texto);
-//            messageController.onOpenConversation(contactoSeleccionado); // recargar historial
-//        }
-//
-//        Message chat = new Chat(myUserId, messageId, texto);
-//        Mediador.getInstance().sendMessage(contactoSeleccionado.getCode(), chat);
-//    }
-
     private void enviarMensaje() {
-        String texto = txtMensaje.getText();
-        if (texto == null) return;
-        texto = texto.trim();
+        String textoOriginal = txtMensaje.getText();
+        if (textoOriginal == null) return;
+
+        String texto = textoOriginal.trim();
         if (texto.isEmpty()) return;
 
         if (contactoSeleccionado == null) {
@@ -294,6 +354,7 @@ public class MainChatUI extends JFrame implements IChatView {
         String textoProcesado = textAnalyzer.analyze(texto);
 
         txtMensaje.setText("");
+        txtMensaje.requestFocusInWindow();
 
         String messageId = UUID.randomUUID().toString();
 
@@ -302,21 +363,10 @@ public class MainChatUI extends JFrame implements IChatView {
             messageController.onOpenConversation(contactoSeleccionado);
         }
 
-        Message chat = new Chat(myUserId, messageId, textoProcesado);
+        edu.upb.chatupb_v2.model.entities.message.Message chat =
+                new Chat(myUserId, messageId, textoProcesado);
         Mediador.getInstance().sendMessage(contactoSeleccionado.getCode(), chat);
     }
-
-    //region metodo appendToHistory obsoleto
-//    private void appendToHistory(String contactCode, String line) {
-//        StringBuilder sb = historial.computeIfAbsent(contactCode, k -> new StringBuilder());
-//        sb.append(line).append("\n");
-//
-//        if (contactoSeleccionado != null && contactoSeleccionado.getCode().equals(contactCode)) {
-//            txtChat.setText(sb.toString());
-//        }
-//    }
-
-// endregion
 
     private void upsertContactoEnUI(Contact contact) {
         for (int i = 0; i < contactosModel.size(); i++) {
@@ -332,27 +382,22 @@ public class MainChatUI extends JFrame implements IChatView {
         contactosModel.addElement(contact);
     }
 
-//    private Contact persistContact(String code, String name, String ip) {
-//        try {
-//            return contactDao.upsert(code, name, ip);
-//        } catch (Exception e) {
-//            System.err.println("No se pudo guardar/actualizar contacto: " + e.getMessage());
-//            return Contact.builder().code(code).name(name).ip(ip).stateConnect(false).build();
-//        }
-//    }
-
     private Contact persistContact(String code, String name, String ip) {
         if (contactController == null) {
-            return Contact.builder().code(code).name(name).ip(ip).stateConnect(false).build();
+            return Contact.builder()
+                    .code(code)
+                    .name(name)
+                    .ip(ip)
+                    .stateConnect(false)
+                    .build();
         }
         return contactController.saveContact(code, name, ip);
     }
 
-    private void handleCommon(Message message) {
+    private void handleCommon(edu.upb.chatupb_v2.model.entities.message.Message message) {
         if (message instanceof Offline) {
             Offline off = (Offline) message;
 
-            // marco como offline en UI
             for (int i = 0; i < contactosModel.size(); i++) {
                 Contact c = contactosModel.get(i);
                 if (c.getCode().equals(off.getIdUsuario())) {
@@ -366,7 +411,7 @@ public class MainChatUI extends JFrame implements IChatView {
         }
     }
 
-    private void helpWithMessages(Message message) {
+    private void helpWithMessages(edu.upb.chatupb_v2.model.entities.message.Message message) {
         if (message instanceof Invitacion) {
             Invitacion inv = (Invitacion) message;
 
@@ -383,10 +428,10 @@ public class MainChatUI extends JFrame implements IChatView {
                 contact.setStateConnect(true);
                 upsertContactoEnUI(contact);
 
-                Message aceptar = new Aceptar(myUserId, myName);
+                edu.upb.chatupb_v2.model.entities.message.Message aceptar =
+                        new Aceptar(myUserId, myName);
                 Mediador.getInstance().sendMessage(inv.getIdUsuario(), aceptar);
             } else {
-                //si no se acepta, eliminar el contacto que se guardó al recibir invitación
                 Mediador.getInstance().rejectInvitation(inv.getIdUsuario());
             }
             return;
@@ -402,7 +447,6 @@ public class MainChatUI extends JFrame implements IChatView {
 
             JOptionPane.showMessageDialog(this, ac.getNombre() + " aceptó tu invitación.");
 
-            // auto-seleccionar para chatear
             for (int i = 0; i < contactosModel.size(); i++) {
                 if (contactosModel.get(i).getCode().equals(ac.getIdUsuario())) {
                     listaContactos.setSelectedIndex(i);
@@ -420,12 +464,12 @@ public class MainChatUI extends JFrame implements IChatView {
         if (message instanceof Chat) {
             Chat chat = (Chat) message;
 
-            // Guardar el mensaje entrante en DB
             if (messageController != null) {
                 messageController.onIncomingMessage(chat);
             }
 
-            if (contactoSeleccionado != null && contactoSeleccionado.getCode().equals(chat.getIdUsuario())) {
+            if (contactoSeleccionado != null
+                    && contactoSeleccionado.getCode().equals(chat.getIdUsuario())) {
                 if (messageController != null) {
                     messageController.onOpenConversation(contactoSeleccionado);
                 }
@@ -436,15 +480,17 @@ public class MainChatUI extends JFrame implements IChatView {
             String nameToUse = chat.getIdUsuario();
             try {
                 Contact existing = contactDao.findByCode(chat.getIdUsuario());
-                if (existing != null && existing.getName() != null && !existing.getName().isBlank()) {
+                if (existing != null
+                        && existing.getName() != null
+                        && !existing.getName().isBlank()) {
                     nameToUse = existing.getName();
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
 
             Contact contact = persistContact(chat.getIdUsuario(), nameToUse, ip);
             contact.setStateConnect(true);
             upsertContactoEnUI(contact);
-
             return;
         }
 
@@ -455,33 +501,121 @@ public class MainChatUI extends JFrame implements IChatView {
                     enviarContacto.getIp()
             );
             upsertContactoEnUI(contact);
-            JOptionPane.showMessageDialog(this, "Recibiste el contacto de: " + contact.getName());
+            JOptionPane.showMessageDialog(this,
+                    "Recibiste el contacto de: " + contact.getName());
             return;
         }
 
         handleCommon(message);
     }
 
+    private void limpiarPanelMensajes() {
+        panelMensajes.removeAll();
+        panelMensajes.revalidate();
+        panelMensajes.repaint();
+    }
+
+    private void renderConversation(List<edu.upb.chatupb_v2.model.entities.Message> messages) {
+        panelMensajes.removeAll();
+
+        for (edu.upb.chatupb_v2.model.entities.Message message : messages) {
+            boolean isMine = myUserId.equals(message.getSenderCode());
+            panelMensajes.add(createMessageRow(message, isMine));
+            panelMensajes.add(Box.createVerticalStrut(8));
+        }
+
+        panelMensajes.revalidate();
+        panelMensajes.repaint();
+        scrollToBottom();
+    }
+
+    private JPanel createMessageRow(
+            edu.upb.chatupb_v2.model.entities.Message message,
+            boolean isMine
+    ) {
+        JPanel row = new JPanel(new BorderLayout());
+        row.setOpaque(false);
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        RoundedPanel bubble = new RoundedPanel(18);
+        bubble.setLayout(new BorderLayout(0, 6));
+        bubble.setBackground(isMine ? COLOR_OUTGOING : COLOR_INCOMING);
+        bubble.setBorder(BorderFactory.createEmptyBorder(10, 12, 8, 12));
+
+        JLabel lblMessage = new JLabel(buildMessageHtml(message.getMessage()));
+        lblMessage.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        bubble.add(lblMessage, BorderLayout.CENTER);
+
+        JLabel lblHour = new JLabel(formatHour(message.getCreatedDate()));
+        lblHour.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        lblHour.setForeground(new Color(110, 110, 110));
+
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        footer.setOpaque(false);
+        footer.add(lblHour);
+        bubble.add(footer, BorderLayout.SOUTH);
+
+        JPanel holder = new JPanel(new BorderLayout());
+        holder.setOpaque(false);
+        holder.add(bubble, isMine ? BorderLayout.EAST : BorderLayout.WEST);
+
+        if (isMine) {
+            row.add(holder, BorderLayout.EAST);
+        } else {
+            row.add(holder, BorderLayout.WEST);
+        }
+
+        return row;
+    }
+
+    private String buildMessageHtml(String text) {
+        String originalText = text == null ? "" : text;
+        int estimatedWidth = Math.min(
+                260,
+                Math.max(80, originalText.replace("\n", " ").length() * 7)
+        );
+        String safeText = escapeHtml(originalText).replace("\n", "<br>");
+
+        return "<html><body style='width: "
+                + estimatedWidth
+                + "px; font-family: sans-serif;'>"
+                + safeText
+                + "</body></html>";
+    }
+
+    private String escapeHtml(String text) {
+        return text
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
+
+    private String formatHour(String createdDate) {
+        if (createdDate == null || createdDate.isBlank()) {
+            return "";
+        }
+
+        try {
+            LocalDateTime parsedDate = LocalDateTime.parse(createdDate, DATABASE_FORMAT);
+            return parsedDate.format(HOUR_FORMAT);
+        } catch (DateTimeParseException e) {
+            return createdDate;
+        }
+    }
+
+    private void scrollToBottom() {
+        SwingUtilities.invokeLater(() -> {
+            JScrollBar scrollBar = scrollMensajes.getVerticalScrollBar();
+            scrollBar.setValue(scrollBar.getMaximum());
+        });
+    }
 
     @Override
     public void setContactController(ContactController contactController) {
         this.contactController = contactController;
     }
-
-    //region onLoad anterior
-
-//    @Override
-//    public void onLoad(List<Contact> contactsList) {
-//        try {
-    ////                modelo.removeAllElements();
-//            contactosModel.addAll(contactsList);
-//            mainView.lista.setModel(contactosModel);
-//        } catch (Exception e){
-//            e.printStackTrace();
-//        }
-//    }
-
-    //endregion
 
     @Override
     public void onLoad(List<Contact> contactsList) {
@@ -489,12 +623,11 @@ public class MainChatUI extends JFrame implements IChatView {
             contactosModel.clear();
 
             for (Contact c : contactsList) {
-                c.setStateConnect(false); // runtime
+                c.setStateConnect(false);
                 contactosModel.addElement(c);
             }
 
             listaContactos.setModel(contactosModel);
-
             listaContactos.repaint();
         });
     }
@@ -505,15 +638,15 @@ public class MainChatUI extends JFrame implements IChatView {
     }
 
     @Override
-    public void onChatHistoryLoaded(String contactCode, String historyText) {
-        // solo actualiza si ese contacto es el seleccionado
-        if (contactoSeleccionado != null && contactoSeleccionado.getCode().equals(contactCode)) {
-            txtChat.setText(historyText);
+    public void onChatHistoryLoaded(String contactCode, List<Message> messages) {
+        if (contactoSeleccionado != null
+                && contactoSeleccionado.getCode().equals(contactCode)) {
+            SwingUtilities.invokeLater(() -> renderConversation(messages));
         }
     }
 
     @Override
-    public void onSocketMessage(Message message) {
+    public void onSocketMessage(edu.upb.chatupb_v2.model.entities.message.Message message) {
         helpWithMessages(message);
     }
 
@@ -529,7 +662,6 @@ public class MainChatUI extends JFrame implements IChatView {
                 }
             }
 
-            // Si no está en la lista, intentamos traerlo desde DB (solo para que el icono se actualice)
             try {
                 Contact fromDb = contactDao.findByCode(contactCode);
                 if (fromDb != null) {
@@ -541,4 +673,5 @@ public class MainChatUI extends JFrame implements IChatView {
             }
         });
     }
+
 }
