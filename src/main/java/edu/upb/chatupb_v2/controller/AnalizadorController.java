@@ -1,8 +1,8 @@
 package edu.upb.chatupb_v2.controller;
 
-import edu.upb.chatupb_v2.model.ExpresionMatematica;
-import edu.upb.chatupb_v2.model.PalabrasVulgares;
-import edu.upb.chatupb_v2.model.IAnalizadorTexto;
+import edu.upb.chatupb_v2.model.analizador.ExpresionMatematica;
+import edu.upb.chatupb_v2.model.analizador.PalabrasVulgares;
+import edu.upb.chatupb_v2.model.analizador.IAnalizadorTexto;
 
 import java.util.ArrayList;
 import java.util.List;

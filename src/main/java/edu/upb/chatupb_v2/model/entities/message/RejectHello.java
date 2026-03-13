@@ -1,5 +1,8 @@
 package edu.upb.chatupb_v2.model.entities.message;
 
+import edu.upb.chatupb_v2.model.server.SocketClient;
+
+import java.io.IOException;
 import java.util.regex.Pattern;
 
 public class RejectHello extends AbstractMessage {
@@ -18,5 +21,10 @@ public class RejectHello extends AbstractMessage {
     @Override
     public String generarTrama() {
         return getCodigo() + "|" + System.lineSeparator();
+    }
+
+    @Override
+    public void execute(SocketClient client) throws IOException {
+        client.send(this);
     }
 }

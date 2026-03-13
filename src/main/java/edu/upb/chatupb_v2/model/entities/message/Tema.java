@@ -1,8 +1,10 @@
 package edu.upb.chatupb_v2.model.entities.message;
 
+import edu.upb.chatupb_v2.model.server.SocketClient;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.IOException;
 import java.util.regex.Pattern;
 
 @Getter
@@ -31,5 +33,10 @@ public class Tema extends AbstractMessage {
     @Override
     public String generarTrama() {
         return getCodigo() +"|" +idUsuario +"|" + idTema + System.lineSeparator();
+    }
+
+    @Override
+    public void execute(SocketClient client) throws IOException {
+        client.send(this);
     }
 }
