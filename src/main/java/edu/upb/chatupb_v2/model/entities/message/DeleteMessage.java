@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 @Getter
 @Setter
-public class DeleteMessage extends Message{
+public class DeleteMessage extends AbstractMessage {
     private String idMensaje;
 
     public DeleteMessage() {

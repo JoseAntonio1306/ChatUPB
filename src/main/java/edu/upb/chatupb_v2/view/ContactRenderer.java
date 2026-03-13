@@ -1,49 +1,50 @@
 package edu.upb.chatupb_v2.view;
 
 import edu.upb.chatupb_v2.model.entities.Contact;
+import edu.upb.chatupb_v2.view.components.StatusIcon;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class ContactRenderer extends JLabel implements ListCellRenderer<Contact> {
+public class ContactRenderer extends DefaultListCellRenderer {
+
+    private static final Color COLOR_ONLINE = new Color(34, 197, 94);
+    private static final Color COLOR_OFFLINE = new Color(239, 68, 68);
+    private static final Color COLOR_BORDER = new Color(148, 163, 184);
 
     @Override
     public Component getListCellRendererComponent(
-            JList<? extends Contact> list,
-            Contact contact,
+            JList<?> list,
+            Object value,
             int index,
             boolean isSelected,
             boolean cellHasFocus
     ) {
-        ImageIcon imageIcon = new ImageIcon(getClass().getResource(
-                contact.isStateConnect() ? "/images/on-line.png" : "/images/off-line.png"
-        ));
+        JLabel label = (JLabel) super.getListCellRendererComponent(
+                list, value, index, isSelected, cellHasFocus
+        );
 
-        Image imgScaled = imageIcon.getImage().getScaledInstance(18, 18, Image.SCALE_SMOOTH);
-        setIcon(new ImageIcon(imgScaled));
-
-        String name = (contact.getName() == null || contact.getName().isBlank())
-                ? contact.getCode()
-                : contact.getName();
-
-        setText("<html><b>" + escape(name) + "</b></html>");
-
-        if (isSelected) {
-            setOpaque(true);
-            setBackground(new Color(230, 230, 250));
-        } else {
-            setOpaque(true);
-            setBackground(Color.WHITE);
+        if (value instanceof Contact contact) {
+            label.setText(contact.getName());
+            label.setIcon(new StatusIcon(
+                    contact.isStateConnect() ? COLOR_ONLINE : COLOR_OFFLINE,
+                    COLOR_BORDER,
+                    12
+            ));
         }
 
-        setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
-        return this;
-    }
+        label.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        label.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+        label.setIconTextGap(10);
 
-    private static String escape(String s) {
-        if (s == null) return "";
-        return s.replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;");
+        if (isSelected) {
+            label.setBackground(new Color(224, 231, 255));
+            label.setForeground(new Color(30, 41, 59));
+        } else {
+            label.setBackground(Color.WHITE);
+            label.setForeground(new Color(30, 41, 59));
+        }
+
+        return label;
     }
 }

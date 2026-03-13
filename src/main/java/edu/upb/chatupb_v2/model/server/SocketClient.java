@@ -166,13 +166,13 @@ public class SocketClient extends Thread {
         }
     }
     //172.16.72.1
-    public void notificar(Message message) {
+    public void notificar(AbstractMessage message) {
         for (SocketListener listener : socketListener) {
             java.awt.EventQueue.invokeLater(() -> listener.onMessage(this, message));
         }
     }
 
-    public void send(Message message) throws IOException {
+    public void send(AbstractMessage message) throws IOException {
 //        message = message + System.lineSeparator();
         try {
             dout.write(message.generarTrama().getBytes("UTF-8"));

@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 @Getter
 @Setter
-public class Zumbido extends Message{
+public class Zumbido extends AbstractMessage {
     private String idUser;
 
     public Zumbido() {

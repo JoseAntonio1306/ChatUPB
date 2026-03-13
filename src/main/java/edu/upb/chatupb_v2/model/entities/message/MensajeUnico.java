@@ -2,13 +2,12 @@ package edu.upb.chatupb_v2.model.entities.message;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Helper;
 
 import java.util.regex.Pattern;
 
 @Getter
 @Setter
-public class MensajeUnico extends Message{
+public class MensajeUnico extends AbstractMessage {
     private String idUsuario;
     private String idMensaje;
     private String mensaje;

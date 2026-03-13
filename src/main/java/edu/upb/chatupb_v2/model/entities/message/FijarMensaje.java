@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 @Getter
 @Setter
-public class FijarMensaje extends Message{
+public class FijarMensaje extends AbstractMessage {
     private String idMensaje;
 
     public FijarMensaje() {

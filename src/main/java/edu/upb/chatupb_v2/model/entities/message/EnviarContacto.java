@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 @Getter
 @Setter
-public class EnviarContacto extends Message{
+public class EnviarContacto extends AbstractMessage {
     private String idUsuario;
     private String nombre;
     private String ip;
