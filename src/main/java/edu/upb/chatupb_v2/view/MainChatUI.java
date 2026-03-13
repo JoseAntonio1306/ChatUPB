@@ -62,7 +62,14 @@ public class MainChatUI extends JFrame implements IChatView {
     private final JScrollPane scrollMensajes = new JScrollPane(panelMensajes);
 
     private final JTextArea txtMensaje = new JTextArea(1, 20);
+    private JScrollPane scrollInput;
+    private SurfacePanel composerBox;
+    private JPanel panelEnviar;
+
+    private static final int COMPOSER_MIN_HEIGHT = 48;
+    private static final int COMPOSER_MAX_HEIGHT = 110;
     private final JButton btnEnviar = new AccentButton("Enviar");
+    private final JButton btnImagen = new JButton("Foto");
 
     private final JButton btnOffline = new JButton("Offline");
     private final JButton btnEnviarContacto = new JButton("Enviar contacto");
@@ -179,7 +186,6 @@ public class MainChatUI extends JFrame implements IChatView {
         panelMensajes.setLayout(new BoxLayout(panelMensajes, BoxLayout.Y_AXIS));
         panelMensajes.setBackground(COLOR_CHAT_BACKGROUND);
         panelMensajes.setBorder(BorderFactory.createEmptyBorder(16, 18, 16, 18));
-        panelMensajes.setLayout(new BoxLayout(panelMensajes, BoxLayout.Y_AXIS));
         panelMensajes.setAlignmentY(Component.TOP_ALIGNMENT);
 
         scrollMensajes.setBorder(null);
@@ -189,43 +195,98 @@ public class MainChatUI extends JFrame implements IChatView {
 
         txtMensaje.setLineWrap(true);
         txtMensaje.setWrapStyleWord(true);
+        txtMensaje.setRows(1);
         txtMensaje.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        txtMensaje.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+        txtMensaje.setBorder(null);
+        txtMensaje.setMargin(new Insets(8, 0, 8, 0));
         txtMensaje.setOpaque(false);
         txtMensaje.setForeground(new Color(30, 41, 59));
+        txtMensaje.setCaretColor(new Color(30, 41, 59));
 
-        JScrollPane scrollInput = new JScrollPane(txtMensaje);
+        scrollInput = new JScrollPane(txtMensaje);
         scrollInput.setBorder(null);
+        scrollInput.setViewportBorder(null);
         scrollInput.setOpaque(false);
         scrollInput.getViewport().setOpaque(false);
-        scrollInput.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollInput.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollInput.setPreferredSize(new Dimension(100, 48));
+        scrollInput.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollInput.getVerticalScrollBar().setUnitIncrement(12);
+        scrollInput.getHorizontalScrollBar().setPreferredSize(new Dimension(0, 0));
+        scrollInput.setPreferredSize(new Dimension(100, 32));
 
-        SurfacePanel cajaMensaje = new SurfacePanel(
+        styleComposerSecondaryButton(btnImagen);
+        btnImagen.setPreferredSize(new Dimension(52, 38));
+        btnImagen.setToolTipText("Enviar imagen");
+
+        composerBox = new SurfacePanel(
                 16,
                 Color.WHITE,
                 COLOR_BORDER
         );
-        cajaMensaje.setLayout(new BorderLayout());
-        cajaMensaje.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
-        cajaMensaje.add(scrollInput, BorderLayout.CENTER);
+        composerBox.setLayout(new GridBagLayout());
+        composerBox.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
+        composerBox.setPreferredSize(new Dimension(100, COMPOSER_MIN_HEIGHT));
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = 0;
+
+// botón foto
+        c.gridx = 0;
+        c.weightx = 0;
+        c.fill = GridBagConstraints.NONE;
+        composerBox.add(btnImagen, c);
+
+// espacio
+        c.gridx = 1;
+        composerBox.add(Box.createHorizontalStrut(6), c);
+
+// separador
+        JPanel separator = new JPanel();
+        separator.setBackground(COLOR_BORDER);
+        separator.setPreferredSize(new Dimension(1, 22));
+        separator.setMinimumSize(new Dimension(1, 22));
+        separator.setMaximumSize(new Dimension(1, 22));
+
+        c.gridx = 2;
+        composerBox.add(separator, c);
+
+// espacio
+        c.gridx = 3;
+        composerBox.add(Box.createHorizontalStrut(8), c);
+
+// input
+        c.gridx = 4;
+        c.weightx = 1.0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        composerBox.add(scrollInput, c);
 
         btnEnviar.setPreferredSize(new Dimension(96, 42));
 
-        JPanel panelEnviar = new JPanel(new BorderLayout(10, 0));
+        Color topNormal = new Color(51, 65, 85);
+        Color topHover = new Color(71, 85, 105);
+        Color topPressed = new Color(30, 41, 59);
+
+        addHoverEffect(btnAddContacto, topNormal, topHover, topPressed);
+        addHoverEffect(btnConectar, topNormal, topHover, topPressed);
+        addHoverEffect(btnEnviarContacto, topNormal, topHover, topPressed);
+        addHoverEffect(btnOffline, topNormal, topHover, topPressed);
+
+        panelEnviar = new JPanel(new BorderLayout(10, 0));
         panelEnviar.setBackground(COLOR_CHAT_BACKGROUND);
         panelEnviar.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-        panelEnviar.add(cajaMensaje, BorderLayout.CENTER);
+        panelEnviar.add(composerBox, BorderLayout.CENTER);
         panelEnviar.add(btnEnviar, BorderLayout.EAST);
 
         panelDer.add(panelEnviar, BorderLayout.SOUTH);
-
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelIzq, panelDer);
         split.setDividerLocation(280);
         split.setBorder(null);
         split.setContinuousLayout(true);
         getContentPane().add(split);
+        actualizarEstadoComposer(false);
+
+        instalarAutoResizeComposer();
+        actualizarAlturaComposer();
     }
 
     private void conectarEventos() {
@@ -239,11 +300,14 @@ public class MainChatUI extends JFrame implements IChatView {
 
             if (contactoSeleccionado == null) {
                 actualizarEstadoHeader(null);
+                actualizarEstadoComposer(false);
                 limpiarPanelMensajes();
                 return;
             }
 
             actualizarEstadoHeader(contactoSeleccionado);
+            actualizarEstadoComposer(true);
+
 
             if (messageController != null) {
                 messageController.onOpenConversation(contactoSeleccionado);
@@ -256,6 +320,7 @@ public class MainChatUI extends JFrame implements IChatView {
         configurarAtajosDeTeclado();
         btnOffline.addActionListener(e -> mandarOffline());
         btnEnviarContacto.addActionListener(e -> enviarContacto());
+        btnImagen.addActionListener(e -> enviarImagen());
     }
 
     private void configurarAtajosDeTeclado() {
@@ -275,7 +340,8 @@ public class MainChatUI extends JFrame implements IChatView {
         actionMap.put("saltoLinea", new AbstractAction() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
-                txtMensaje.append("\n");
+                txtMensaje.insert("\n", txtMensaje.getCaretPosition());
+                actualizarAlturaComposer();
             }
         });
     }
@@ -290,18 +356,40 @@ public class MainChatUI extends JFrame implements IChatView {
         Mediador.getInstance().checkPresence(contactoSeleccionado.getCode());
     }
 
-    private void cargarContactosDesdeDB() {
-        contactosModel.clear();
+    private void enviarImagen() {
+        if (contactoSeleccionado == null) {
+            JOptionPane.showMessageDialog(this, "Primero selecciona un contacto.");
+            return;
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        int result = fileChooser.showOpenDialog(this);
+
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
         try {
-            List<Contact> contactos = contactDao.findAll();
-            for (Contact c : contactos) {
-                c.setStateConnect(false);
-                contactosModel.addElement(c);
+            java.io.File file = fileChooser.getSelectedFile();
+            byte[] imageBytes = java.nio.file.Files.readAllBytes(file.toPath());
+
+            String messageId = UUID.randomUUID().toString();
+
+            if (messageController != null) {
+                messageController.onOutgoingImage(contactoSeleccionado, messageId, imageBytes);
+                messageController.onOpenConversation(contactoSeleccionado);
             }
-        } catch (SQLException e) {
-            System.err.println("No se pudo cargar contactos: " + e.getMessage());
+
+            AbstractMessage enviarImagen = new EnviarImagen(
+                    myUserId,
+                    messageId,
+                    imageBytes
+            );
+
+            Mediador.getInstance().sendMessage(contactoSeleccionado.getCode(), enviarImagen);
+
         } catch (Exception e) {
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "No se pudo enviar la imagen: " + e.getMessage());
         }
     }
 
@@ -397,6 +485,7 @@ public class MainChatUI extends JFrame implements IChatView {
         String textoProcesado = textAnalyzer.analyze(texto);
 
         txtMensaje.setText("");
+        actualizarAlturaComposer();
         txtMensaje.requestFocusInWindow();
 
         String messageId = UUID.randomUUID().toString();
@@ -568,6 +657,44 @@ public class MainChatUI extends JFrame implements IChatView {
             return;
         }
 
+        if (message instanceof EnviarImagen enviarImagen) {
+
+            if (messageController != null) {
+                messageController.onIncomingImage(enviarImagen);
+            }
+
+            if (contactoSeleccionado != null
+                    && contactoSeleccionado.getCode().equals(enviarImagen.getIdUsuario())) {
+                if (messageController != null) {
+                    messageController.onOpenConversation(contactoSeleccionado);
+                }
+            }
+
+            String ip = Mediador.getInstance().getIp(enviarImagen.getIdUsuario());
+
+            String nameToUse = enviarImagen.getIdUsuario();
+            try {
+                Contact existing = contactDao.findByCode(enviarImagen.getIdUsuario());
+                if (existing != null
+                        && existing.getName() != null
+                        && !existing.getName().isBlank()) {
+                    nameToUse = existing.getName();
+                }
+            } catch (Exception ignored) {
+            }
+
+            Contact contact = persistContact(enviarImagen.getIdUsuario(), nameToUse, ip);
+            contact.setStateConnect(true);
+            upsertContactoEnUI(contact);
+
+            if (contactoSeleccionado != null
+                    && contactoSeleccionado.getCode().equals(contact.getCode())) {
+                contactoSeleccionado.setStateConnect(true);
+                actualizarEstadoHeader(contactoSeleccionado);
+            }
+            return;
+        }
+
         handleCommon(message);
     }
 
@@ -616,9 +743,14 @@ public class MainChatUI extends JFrame implements IChatView {
         JPanel content = new JPanel(new BorderLayout(0, 8));
         content.setOpaque(false);
 
-        JLabel lblMessage = new JLabel(buildMessageHtml(message.getMessage()));
-        lblMessage.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        content.add(lblMessage, BorderLayout.CENTER);
+        if ("IMAGE".equalsIgnoreCase(message.getType())) {
+            JLabel lblImage = buildImageLabel(message.getMessage());
+            content.add(lblImage, BorderLayout.CENTER);
+        } else {
+            JLabel lblMessage = new JLabel(buildMessageHtml(message.getMessage()));
+            lblMessage.setFont(new Font("SansSerif", Font.PLAIN, 14));
+            content.add(lblMessage, BorderLayout.CENTER);
+        }
 
         JLabel lblHour = new JLabel(formatHour(message.getCreatedDate()));
         lblHour.setFont(new Font("SansSerif", Font.PLAIN, 11));
@@ -646,6 +778,43 @@ public class MainChatUI extends JFrame implements IChatView {
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, preferred.height));
 
         return row;
+    }
+
+    private JLabel buildImageLabel(String base64) {
+        JLabel label = new JLabel();
+
+        try {
+            byte[] imageBytes = java.util.Base64.getDecoder().decode(base64);
+            java.io.ByteArrayInputStream bis = new java.io.ByteArrayInputStream(imageBytes);
+            java.awt.image.BufferedImage bufferedImage = javax.imageio.ImageIO.read(bis);
+
+            if (bufferedImage != null) {
+                int maxWidth = 220;
+                int maxHeight = 220;
+
+                int originalWidth = bufferedImage.getWidth();
+                int originalHeight = bufferedImage.getHeight();
+
+                double scale = Math.min(
+                        (double) maxWidth / originalWidth,
+                        (double) maxHeight / originalHeight
+                );
+
+                scale = Math.min(scale, 1.0);
+
+                int newWidth = (int) (originalWidth * scale);
+                int newHeight = (int) (originalHeight * scale);
+
+                Image scaled = bufferedImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+                label.setIcon(new ImageIcon(scaled));
+            } else {
+                label.setText("[Imagen no disponible]");
+            }
+        } catch (Exception e) {
+            label.setText("[Imagen inválida]");
+        }
+
+        return label;
     }
 
     private String buildMessageHtml(String text) {
@@ -778,6 +947,54 @@ public class MainChatUI extends JFrame implements IChatView {
         button.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
     }
 
+    private void styleComposerSecondaryButton(JButton button) {
+        Color normalText = new Color(51, 65, 85);
+        Color hoverText = new Color(37, 99, 235);
+        Color hoverBg = new Color(241, 245, 249);
+        Color disabledText = new Color(148, 163, 184);
+
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
+        button.setOpaque(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setFont(new Font("SansSerif", Font.BOLD, 12));
+        button.setForeground(normalText);
+        button.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
+        button.setMargin(new Insets(0, 0, 0, 0));
+        button.setHorizontalAlignment(SwingConstants.CENTER);
+
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                if (button.isEnabled()) {
+                    button.setOpaque(true);
+                    button.setBackground(hoverBg);
+                    button.setForeground(hoverText);
+                    button.repaint();
+                }
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                if (button.isEnabled()) {
+                    button.setOpaque(false);
+                    button.setForeground(normalText);
+                    button.repaint();
+                }
+            }
+        });
+
+        button.addChangeListener(e -> {
+            if (!button.isEnabled()) {
+                button.setOpaque(false);
+                button.setForeground(disabledText);
+            } else if (!button.getModel().isRollover()) {
+                button.setForeground(normalText);
+            }
+        });
+    }
+
     private void styleHeaderActionButton(JButton button, int width, int height) {
         button.setFocusPainted(false);
         button.setBorderPainted(false);
@@ -807,5 +1024,97 @@ public class MainChatUI extends JFrame implements IChatView {
             lblEstadoContacto.setText("● Desconectado");
             lblEstadoContacto.setForeground(COLOR_STATUS_OFFLINE);
         }
+    }
+    private void actualizarEstadoComposer(boolean enabled) {
+        txtMensaje.setEnabled(enabled);
+        btnEnviar.setEnabled(enabled);
+        btnImagen.setEnabled(enabled);
+
+        txtMensaje.setForeground(enabled ? new Color(30, 41, 59) : new Color(148, 163, 184));
+
+        btnImagen.repaint();
+        btnEnviar.repaint();
+        txtMensaje.repaint();
+    }
+
+    private void addHoverEffect(JButton button, Color normal, Color hover, Color pressed) {
+        button.setBackground(normal);
+
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                if (button.isEnabled()) {
+                    button.setBackground(hover);
+                }
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                if (button.isEnabled()) {
+                    button.setBackground(normal);
+                }
+            }
+
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent e) {
+                if (button.isEnabled()) {
+                    button.setBackground(pressed);
+                }
+            }
+
+            @Override
+            public void mouseReleased(java.awt.event.MouseEvent e) {
+                if (button.isEnabled()) {
+                    if (button.contains(e.getPoint())) {
+                        button.setBackground(hover);
+                    } else {
+                        button.setBackground(normal);
+                    }
+                }
+            }
+        });
+    }
+    private void instalarAutoResizeComposer() {
+        txtMensaje.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                actualizarAlturaComposer();
+            }
+
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                actualizarAlturaComposer();
+            }
+
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                actualizarAlturaComposer();
+            }
+        });
+    }
+
+    private void actualizarAlturaComposer() {
+        SwingUtilities.invokeLater(() -> {
+            int width = txtMensaje.getWidth();
+            if (width <= 0) {
+                return;
+            }
+
+            txtMensaje.setSize(new Dimension(width, Short.MAX_VALUE));
+            int preferredTextHeight = txtMensaje.getPreferredSize().height;
+
+            int targetTextHeight = Math.max(
+                    28,
+                    Math.min(COMPOSER_MAX_HEIGHT - 16, preferredTextHeight)
+            );
+
+            scrollInput.setPreferredSize(new Dimension(scrollInput.getWidth(), targetTextHeight));
+            composerBox.setPreferredSize(new Dimension(composerBox.getWidth(), targetTextHeight + 16));
+
+            composerBox.revalidate();
+            composerBox.repaint();
+            panelEnviar.revalidate();
+            panelEnviar.repaint();
+        });
     }
 }

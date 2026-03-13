@@ -1,4 +1,4 @@
-package edu.upb.chatupb_v2.model;
+package edu.upb.chatupb_v2.model.analizador;
 
 public interface IAnalizadorTexto {
 

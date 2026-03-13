@@ -158,6 +158,13 @@ public class SocketClient extends Thread {
                         notificar(enviarContacto);
                         break;
                     }
+                    case "021": {
+                        System.out.println("Es imagen");
+                        EnviarImagen enviarImagen = EnviarImagen.parse(message);
+                        enviarImagen.setIp(ip);
+                        notificar(enviarImagen);
+                        break;
+                    }
                 }
             }
 

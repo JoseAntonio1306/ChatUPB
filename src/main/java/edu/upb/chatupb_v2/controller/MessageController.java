@@ -4,10 +4,12 @@ import edu.upb.chatupb_v2.model.dao.MessageDao;
 import edu.upb.chatupb_v2.model.entities.Contact;
 import edu.upb.chatupb_v2.model.entities.Message;
 import edu.upb.chatupb_v2.model.entities.message.Chat;
+import edu.upb.chatupb_v2.model.entities.message.EnviarImagen;
 import edu.upb.chatupb_v2.view.IChatView;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
@@ -69,6 +71,46 @@ public class MessageController {
             messageDao.save(message);
         } catch (Exception e) {
             System.out.println("Error guardando el mensaje entrante: " + e.getMessage());
+        }
+    }
+
+    public void onOutgoingImage(Contact contact, String idMensaje, byte[] imageBytes) {
+        try {
+            String base64 = Base64.getEncoder().encodeToString(imageBytes);
+
+            Message message = Message.builder()
+                    .codMessage(idMensaje)
+                    .senderCode(myUserId)
+                    .recipientCode(contact.getCode())
+                    .createdDate(LocalDateTime.now().format(fmt))
+                    .message(base64)
+                    .type("IMAGE")
+                    .roomCode(null)
+                    .build();
+
+            messageDao.save(message);
+        } catch (Exception e) {
+            System.out.println("Error guardando imagen saliente: " + e.getMessage());
+        }
+    }
+
+    public void onIncomingImage(EnviarImagen enviarImagen) {
+        try {
+            String base64 = Base64.getEncoder().encodeToString(enviarImagen.getImage());
+
+            Message message = Message.builder()
+                    .codMessage(enviarImagen.getIdMessage())
+                    .senderCode(enviarImagen.getIdUsuario())
+                    .recipientCode(myUserId)
+                    .createdDate(LocalDateTime.now().format(fmt))
+                    .message(base64)
+                    .type("IMAGE")
+                    .roomCode(null)
+                    .build();
+
+            messageDao.save(message);
+        } catch (Exception e) {
+            System.out.println("Error guardando imagen entrante: " + e.getMessage());
         }
     }
 }
