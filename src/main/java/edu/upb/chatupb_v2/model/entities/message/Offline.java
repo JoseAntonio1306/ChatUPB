@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 @Getter
 @Setter
-public class Offline extends Message{
+public class Offline extends AbstractMessage {
     private String idUsuario;
 
     public Offline() {

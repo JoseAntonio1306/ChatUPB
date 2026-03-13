@@ -1,13 +1,14 @@
 package edu.upb.chatupb_v2.controller;
 
-import edu.upb.chatupb_v2.model.entities.message.Chat;
+import edu.upb.chatupb_v2.model.dao.MessageDao;
 import edu.upb.chatupb_v2.model.entities.Contact;
 import edu.upb.chatupb_v2.model.entities.Message;
-import edu.upb.chatupb_v2.model.dao.MessageDao;
+import edu.upb.chatupb_v2.model.entities.message.Chat;
 import edu.upb.chatupb_v2.view.IChatView;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 
 public class MessageController {
@@ -16,7 +17,8 @@ public class MessageController {
     private final IChatView chatView;
     private final String myUserId;
 
-    private final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final DateTimeFormatter fmt =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public MessageController(IChatView chatView, String myUserId) {
         this.messageDao = new MessageDao();
@@ -24,19 +26,16 @@ public class MessageController {
         this.myUserId = myUserId;
     }
 
-    //cargar historial desde DB
     public void onOpenConversation(Contact contact) {
         try {
             List<Message> messages = messageDao.findConversation(myUserId, contact.getCode());
-            String chat = buildChatHistory(contact.getCode(), messages);
-            chatView.onChatHistoryLoaded(contact.getCode(), chat);
+            chatView.onChatHistoryLoaded(contact.getCode(), messages);
         } catch (Exception e) {
             System.out.println("Error cargando historial: " + e.getMessage());
-            chatView.onChatHistoryLoaded(contact.getCode(), "");
+            chatView.onChatHistoryLoaded(contact.getCode(), Collections.emptyList());
         }
     }
 
-    // cuando envías un mensaje se lo guarda en DB
     public void onOutgoingMessage(Contact contact, String idMensaje, String texto) {
         try {
             Message message = Message.builder()
@@ -55,7 +54,6 @@ public class MessageController {
         }
     }
 
-    // cuando recibes un mensaje lo guarda en DB
     public void onIncomingMessage(Chat chat) {
         try {
             Message message = Message.builder()
@@ -72,16 +70,5 @@ public class MessageController {
         } catch (Exception e) {
             System.out.println("Error guardando el mensaje entrante: " + e.getMessage());
         }
-    }
-
-    private String buildChatHistory(String otherCode, List<Message> msgs) {
-        StringBuilder sb = new StringBuilder();
-        for (Message m : msgs) {
-            boolean mine = myUserId.equals(m.getSenderCode());
-            sb.append(mine ? "Yo: " : "Él: ")
-                    .append(m.getMessage() == null ? "" : m.getMessage())
-                    .append("\n");
-        }
-        return sb.toString();
     }
 }
