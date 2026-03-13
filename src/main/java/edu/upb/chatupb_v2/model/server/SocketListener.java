@@ -1,7 +1,7 @@
 package edu.upb.chatupb_v2.model.server;
 
-import edu.upb.chatupb_v2.model.entities.message.Message;
+import edu.upb.chatupb_v2.model.entities.message.AbstractMessage;
 
 public interface SocketListener {
-    void onMessage(SocketClient socketClient,Message invitacion);
+    void onMessage(SocketClient socketClient, AbstractMessage invitacion);
 }

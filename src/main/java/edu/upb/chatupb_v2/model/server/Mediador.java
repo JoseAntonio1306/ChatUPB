@@ -66,7 +66,7 @@ public class Mediador implements SocketListener{
         this.clients.remove(userId);
     }
 
-    public void sendMessage(String userId, Message message){
+    public void sendMessage(String userId, AbstractMessage message){
         SocketClient client = this.clients.get(userId);
         if (client == null) return;
 
@@ -176,7 +176,7 @@ public class Mediador implements SocketListener{
     }
 
     @Override
-    public void onMessage(SocketClient socketClient, Message message) {
+    public void onMessage(SocketClient socketClient, AbstractMessage message) {
         // Guardar el socket contra el id del usuario emisor para poder responder después
         String senderId = extractSenderId(message);
         if (senderId != null) {
@@ -338,7 +338,7 @@ public class Mediador implements SocketListener{
         }
     }
 
-    private String extractSenderId(Message message) {
+    private String extractSenderId(AbstractMessage message) {
         if (message instanceof Invitacion inv) return inv.getIdUsuario();
         if (message instanceof Aceptar ac) return ac.getIdUsuario();
         if (message instanceof Chat ch) return ch.getIdUsuario();

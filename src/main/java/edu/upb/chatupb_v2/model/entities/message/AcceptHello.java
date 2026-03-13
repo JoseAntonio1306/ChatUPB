@@ -6,7 +6,7 @@ import lombok.Setter;
 import java.util.regex.Pattern;
 @Getter
 @Setter
-public class AcceptHello extends Message{
+public class AcceptHello extends AbstractMessage {
     private String idUsuario;
 
     public AcceptHello() {

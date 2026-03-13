@@ -2,7 +2,7 @@ package edu.upb.chatupb_v2.model.entities.message;
 
 import java.util.regex.Pattern;
 
-public class RejectHello extends Message{
+public class RejectHello extends AbstractMessage {
     public RejectHello() {
         super("006");
     }
