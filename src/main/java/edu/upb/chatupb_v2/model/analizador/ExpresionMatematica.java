@@ -1,6 +1,5 @@
-package edu.upb.chatupb_v2.model;
+package edu.upb.chatupb_v2.model.analizador;
 
-import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

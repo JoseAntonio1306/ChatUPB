@@ -71,7 +71,7 @@ public class Mediador implements SocketListener{
         if (client == null) return;
 
         try{
-            client.send(message);
+            message.execute(client);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -325,6 +325,16 @@ public class Mediador implements SocketListener{
             }
         }
 
+        if (message instanceof EnviarImagen enviarImagen) {
+            try {
+                sendMessage(enviarImagen.getIdUsuario(), new ReceiveMessage(enviarImagen.getIdMessage()));
+                System.out.println("Enviado ReceiveMessage para imagen: " + enviarImagen.getIdMessage());
+            } catch (Exception e) {
+                System.out.println("No se pudo enviar ReceiveMessage para imagen: " + e.getMessage());
+            }
+            notifyContactStatus(enviarImagen.getIdUsuario(), true);
+        }
+
         // Reenviar a la vista (sin SocketClient)
         IChatView v = this.view;
         if (v != null) {
@@ -344,6 +354,7 @@ public class Mediador implements SocketListener{
         if (message instanceof Chat ch) return ch.getIdUsuario();
         if (message instanceof Offline off) return off.getIdUsuario();
         if (message instanceof EnviarContacto ec) return ec.getIdUsuario();
+        if (message instanceof EnviarImagen ei) return ei.getIdUsuario();
         return null;
     }
 

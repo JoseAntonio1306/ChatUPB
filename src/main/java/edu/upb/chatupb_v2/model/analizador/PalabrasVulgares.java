@@ -1,4 +1,4 @@
-package edu.upb.chatupb_v2.model;
+package edu.upb.chatupb_v2.model.analizador;
 
 import java.util.Arrays;
 import java.util.List;
